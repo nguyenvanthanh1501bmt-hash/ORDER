@@ -21,7 +21,7 @@ export default function CheckUser() {
         }
 
         try {
-          // Lấy role từ bảng staff
+          // Lấy role từ bảng staff 
           const { data: staffData, error: staffError } = await client
             .from('staff')
             .select('role')
