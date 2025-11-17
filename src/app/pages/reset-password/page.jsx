@@ -1,4 +1,5 @@
 'use client'
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import client from "@/api/client"
@@ -12,12 +13,16 @@ export default function ResetPasswordPage() {
   const [message, setMessage] = useState("")
   const [loading, setLoading] = useState(false)
 
-  // Lấy token từ hash sau khi mount
+  // Lấy token từ hash khi component mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash // "#access_token=..."
       const params = new URLSearchParams(hash.slice(1))
-      setAccessToken(params.get("access_token"))
+      const token = params.get("access_token")
+      if (token) {
+        // setState async để tránh cảnh báo
+        setTimeout(() => setAccessToken(token), 0)
+      }
     }
   }, [])
 
@@ -38,13 +43,23 @@ export default function ResetPasswordPage() {
       return
     }
 
-    // Cập nhật mật khẩu bằng access token
-    const { error } = await client.auth.updateUser({ password }, accessToken)
+    try {
+      // Cập nhật mật khẩu bằng access token
+      const { error } = await client.auth.updateUser({ password }, accessToken)
+      if (error) {
+        setMessage(error.message)
+        setLoading(false)
+        return
+      }
 
-    if (error) setMessage(error.message)
-    else {
-      setMessage("Đổi mật khẩu thành công!")
+      // Logout tất cả session cũ
+      await client.auth.signOut()
+
+      setMessage("Đổi mật khẩu thành công! Bạn sẽ được chuyển đến trang login...")
       setTimeout(() => router.push("/pages"), 2000)
+    } catch (err) {
+      console.error(err)
+      setMessage("Có lỗi xảy ra!")
     }
 
     setLoading(false)
