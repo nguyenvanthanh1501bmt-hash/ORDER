@@ -3,23 +3,48 @@
 import { useRouter } from 'next/navigation';
 import client from '@/api/client';
 import useAuth from '@/hooks/useAuth';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [checkingRole, setCheckingRole] = useState(true);
 
   useEffect(() => {
-      if (!loading && !user) {
-        // redirect sang /pages nếu chưa login
-        router.push('/pages');
-      }
-  }, [user, loading, router]);
-  
-  if (loading) return <h1>Loading...</h1>;
-  if (!user) return null; // đang redirect → không render gì
+    const checkAdmin = async () => {
+      if (!loading) {
+        if (!user) {
+          router.push('/pages'); // chưa login → redirect
+          return;
+        }
 
-  // Hàm logout
+        try {
+          const { data: staffData, error } = await client
+            .from('staff')
+            .select('role')
+            .eq('email', user.email)
+            .single();
+
+          if (error || !staffData || staffData.role !== 'admin') {
+            // không phải admin → redirect
+            router.push('/pages'); 
+            return;
+          }
+
+          setCheckingRole(false); // là admin → render trang
+        } catch (err) {
+          console.error(err);
+          router.push('/pages'); // lỗi → redirect
+        }
+      }
+    };
+
+    checkAdmin();
+  }, [user, loading, router]);
+
+  if (loading || checkingRole) return <h1>Loading...</h1>;
+  if (!user) return null; // đang redirect
+
   const handleLogout = async () => {
     try {
       const { error } = await client.auth.signOut();
@@ -27,8 +52,7 @@ export default function AdminPage() {
         console.error('Logout error:', error.message);
         return;
       }
-      // Sau khi logout → về trang login
-      router.push('/'); // hoặc trang login admin nếu bạn tạo riêng
+      router.push('/');
     } catch (err) {
       console.error('Logout failed:', err);
     }

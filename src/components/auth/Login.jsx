@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import client from "@/api/client";
+import Link from "next/link";
 
 const Login = () => {
   const router = useRouter();
@@ -46,11 +47,11 @@ const Login = () => {
 
       // 3. Router push theo role
       if (role === "admin") {
-        router.push("/Admin");
+        router.push("/pages/admin");
 
         console.log(role)
       } else if (role === "staff") {
-        router.push("/staff");
+        router.push("/pages/staff");
       } else {
         setError("Unknown role");
       }
@@ -90,6 +91,12 @@ const Login = () => {
       >
         {loading ? "Logging in..." : "Login"}
       </button>
+
+      <Link href="/pages/forgot_password">
+        Forgot password ?
+      </Link>
+
+
     </form>
   );
 };

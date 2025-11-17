@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import client from '@/api/client';
 import useAuth from '@/hooks/useAuth';
@@ -8,16 +8,43 @@ import useAuth from '@/hooks/useAuth';
 export default function StaffPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [checkingRole, setCheckingRole] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
-      // redirect sang /pages nếu chưa login
-      router.push('/pages');
-    }
+    const checkStaff = async () => {
+      if (!loading) {
+        if (!user) {
+          router.push('/pages'); // chưa login → redirect
+          return;
+        }
+
+        try {
+          // Lấy role từ bảng staff
+          const { data: staffData, error } = await client
+            .from('staff')
+            .select('role')
+            .eq('email', user.email)
+            .single();
+
+          if (error || !staffData || staffData.role !== 'staff') {
+            // không phải staff → redirect
+            router.push('/pages'); 
+            return;
+          }
+
+          setCheckingRole(false); // là staff → render trang
+        } catch (err) {
+          console.error(err);
+          router.push('/pages'); // lỗi → redirect
+        }
+      }
+    };
+
+    checkStaff();
   }, [user, loading, router]);
 
-  if (loading) return <h1>Loading...</h1>;
-  if (!user) return null; // đang redirect → không render gì
+  if (loading || checkingRole) return <h1>Loading...</h1>;
+  if (!user) return null; // đang redirect
 
   const handleLogout = async () => {
     try {
@@ -26,7 +53,7 @@ export default function StaffPage() {
         console.error('Logout error:', error.message);
         return;
       }
-      router.push('/staff');
+      router.push('/pages'); // sau khi logout → về login
     } catch (err) {
       console.error('Logout failed:', err);
     }
