@@ -1,10 +1,7 @@
-'use client'
-
-import useAuth from "@/hooks/useAuth"
 import { Button } from "@/components/ui/button"
 import client from "@/api/client"
 
-export default function AdminHeader(){
+export default function StaffHeader(){
     const handleLogout = async () => {
     const { error } = await client.auth.signOut()
     if (!error) window.location.href = '/'
@@ -12,7 +9,7 @@ export default function AdminHeader(){
 
   return (
     <div className="p-4 flex flex-row items-center justify-between border">
-      <h1 className="text-2xl font-semibold">Welcome, Admin!</h1>
+      <h1 className="text-2xl font-semibold">Welcome, Staff!</h1>
 
       <Button
         onClick={handleLogout}
