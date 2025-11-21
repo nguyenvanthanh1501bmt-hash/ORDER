@@ -4,7 +4,7 @@ export async function GET() {
   try {
     const { data: tableList, error } = await supabaseAdmin
       .from('tables')
-      .select();
+      .select('id, qr_code_id, name');
 
     if (error) throw error;
 
