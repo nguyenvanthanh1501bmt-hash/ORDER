@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { getFoodList } from "../../service/Food/Food_list";
 import AddFoodModal from "../../service/Food/AddFoodModal";
+import DeleteFoodModal from "../../service/Food/DeleteFoodModal";
+import UpdateFoodModal from "../../service/Food/UpdateFoodModal";
 import Image from "next/image";
 
 import {
@@ -16,6 +18,9 @@ import {
 export default function Foodpage() {
     const [foodList, setFoodList] = useState([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); // ✅ thêm state cho update
+    const [selectedFood, setSelectedFood] = useState(null);
 
     const fetchFoodList = async () => {
         const data = await getFoodList();
@@ -29,9 +34,7 @@ export default function Foodpage() {
     // Hàm parse options
     const parseOptions = (options) => {
         if (!options) return [];
-
         if (Array.isArray(options)) return options;
-
         if (typeof options === "string") {
             try {
                 return JSON.parse(options);
@@ -39,7 +42,6 @@ export default function Foodpage() {
                 console.error("Lỗi parse options:", error);
             }
         }
-
         return [];
     };
 
@@ -74,7 +76,7 @@ export default function Foodpage() {
                                         />
                                     </div>
                                 ) : (
-                                    <div className="w-1/3 h-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
+                                    <div className="w-1/4 h-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
                                         Không có ảnh
                                     </div>
                                 )}
@@ -110,23 +112,30 @@ export default function Foodpage() {
                                         )}
                                     </CardContent>
 
-                                    
                                 </div>
 
-                                <div className="flex gap-2 relative w-1/4 p-4 h-fit items-end justify-end">
-                                        <button
-                                            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                            onClick={() => (alert('Chức năng cập nhật đang phát triển'))}
-                                        >
-                                            Update
-                                        </button>
+                                {/* Nút Update/Delete */}
+                                <div className="flex gap-2 w-1/4 p-4 h-full items-end justify-end">
+                                    <button
+                                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                        onClick={() => {
+                                            setSelectedFood(food);
+                                            setIsUpdateModalOpen(true); // mở modal update
+                                        }}
+                                    >
+                                        Update
+                                    </button>
 
-                                        <button
-                                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                                            onClick={() => (alert('Chức năng xóa đang phát triển'))}
-                                        >
-                                            Delete
-                                        </button>
+                                    <button
+                                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                        onClick={() => {
+                                            setSelectedFood(food);
+                                            setIsDeleteModalOpen(true);
+                                            console.log("Deleting food:", food);
+                                        }}
+                                    >
+                                        Delete
+                                    </button>
                                 </div>
                             </Card>
                         );
@@ -154,6 +163,33 @@ export default function Foodpage() {
                     }}
                 />
             )}
+
+            {/* Modal Update */}
+            {isUpdateModalOpen && selectedFood && (
+                <UpdateFoodModal
+                    open={isUpdateModalOpen}
+                    food={selectedFood}
+                    onOpenChange={(state) => {
+                        setIsUpdateModalOpen(state);
+                        if (!state) setSelectedFood(null); // reset khi đóng
+                        fetchFoodList(); // refresh danh sách
+                    }}
+                />
+            )}
+
+            {/* Modal Delete */}
+            {isDeleteModalOpen && selectedFood && (
+                <DeleteFoodModal
+                    open={isDeleteModalOpen}
+                    food={selectedFood}
+                    onOpenChange={(state) => {
+                        setIsDeleteModalOpen(state);
+                        if (!state) setSelectedFood(null); // reset khi đóng
+                        fetchFoodList();
+                    }}
+                />
+            )}
+
         </div>
     );
 }
