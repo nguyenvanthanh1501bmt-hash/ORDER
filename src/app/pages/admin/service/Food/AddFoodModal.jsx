@@ -140,7 +140,7 @@ export default function AddFoodModal({ open, onOpenChange }) {
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
-                    type="text" placeholder='Options JSON'
+                    type="text" placeholder='OPTION JSON example: ["Size S","Size M","Size L"]'
                     onChange={e => {
                     try { setOptions(JSON.parse(e.target.value)); }
                     catch { setOptions([]); }
