@@ -40,6 +40,18 @@ export default function StaffOrders() {
     );
   }
 
+  const handleReject = async (orderId) => {
+    // Gửi request xóa order ở server
+    await fetch('/api/orders/delete-order', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId })
+    });
+
+    // Xóa order khỏi UI
+    setOrders(prev => prev.filter(o => o.id !== orderId));
+  }
+
   return (
     <div>
       <h2>Orders</h2>
@@ -52,7 +64,10 @@ export default function StaffOrders() {
             ))}
           </ul>
           {order.status === 'pending_staff_approval' && (
-            <button onClick={() => handleAccept(order.id)}>Accept</button>
+            <>
+              <button onClick={() => handleAccept(order.id)}>Accept</button>{' '}
+              <button onClick={() => handleReject(order.id)}>Reject</button>
+            </>
           )}
         </div>
       ))}
