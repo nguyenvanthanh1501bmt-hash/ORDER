@@ -178,7 +178,7 @@ export default function AddFoodModal({ open, onOpenChange }) {
                     {/* Hiển thị lỗi */}
                     {error && <p className="text-red-600">{error}</p>}
 
-                    {/* Nút Hủy / Lưu */}
+                    {/* Nút Hủy / Lưu */} 
                     <div className="flex justify-end gap-2 pt-2">
                         <button
                             type="button"

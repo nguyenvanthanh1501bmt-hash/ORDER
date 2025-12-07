@@ -19,7 +19,7 @@ export default function Foodpage() {
     const [foodList, setFoodList] = useState([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); // ✅ thêm state cho update
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); //thêm state cho update
     const [selectedFood, setSelectedFood] = useState(null);
 
     const fetchFoodList = async () => {

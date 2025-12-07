@@ -4,9 +4,7 @@ export async function PUT(req) {
   try {
     const { user_id, email, name, role } = await req.json();
 
-    if (!user_id) {
-      return new Response(JSON.stringify({ message: "user_id is required" }), { status: 400 });
-    }
+    if (!user_id) return new Response(JSON.stringify({ message: "user_id is required" }), { status: 400 });
 
     // 1. Cập nhật Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -30,7 +28,6 @@ export async function PUT(req) {
     if (staffError) throw staffError;
 
     return new Response(JSON.stringify({ authData, staffData }), { status: 200 });
-
   } catch (err) {
     return new Response(JSON.stringify({ message: err.message }), { status: 400 });
   }
