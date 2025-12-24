@@ -1,21 +1,33 @@
 import { supabaseAdmin } from "@/api/adminClient";
 
 export async function POST(req) {
-    const { tableName, qrCodeId} = await req.json();
+  try {
+    const { tableName, qr_code_id } = await req.json();
 
-    try {
-        const {data: tableData, error: tableError} = await supabaseAdmin
-            .from('tables')
-            .insert({ name: tableName, qr_code_id: qrCodeId })
-            .select()
-            .single()
-
-        if (tableError) throw tableError;
-
-        return new Response(JSON.stringify(tableData), { status: 200 });
+    if (!tableName || !qr_code_id) {
+      return new Response(
+        JSON.stringify({ message: "Missing tableName or qr_code_id" }),
+        { status: 400 }
+      );
     }
-    catch (err) {
-        return new Response(JSON.stringify({ message: err.message }), 
-        {status: 400,});
-    }
+
+    const { data, error } = await supabaseAdmin
+      .from("tables")
+      .insert({
+        name: tableName,
+        qr_code_id: qr_code_id,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return new Response(JSON.stringify(data), { status: 200 });
+
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ message: err.message }),
+      { status: 400 }
+    );
+  }
 }

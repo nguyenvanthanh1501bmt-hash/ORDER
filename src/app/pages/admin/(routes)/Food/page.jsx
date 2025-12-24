@@ -1,195 +1,255 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from "react";
-import { getFoodList } from "../../service/Food/Food_list";
-import AddFoodModal from "../../service/Food/AddFoodModal";
-import DeleteFoodModal from "../../service/Food/DeleteFoodModal";
-import UpdateFoodModal from "../../service/Food/UpdateFoodModal";
-import Image from "next/image";
+import { useEffect, useState } from "react"
+import Image from "next/image"
+import { Pencil, Trash2, Plus } from "lucide-react"
 
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-    CardContent,
-} from "@/components/ui/card";
+import { getFoodList } from "../../service/Food/Food_list"
+import AddFoodModal from "../../service/Food/AddFoodModal"
+import DeleteFoodModal from "../../service/Food/DeleteFoodModal"
+import UpdateFoodModal from "../../service/Food/UpdateFoodModal"
+import SearchByName from "../../components/SearchByName"
 
 export default function Foodpage() {
-    const [foodList, setFoodList] = useState([]);
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); //thêm state cho update
-    const [selectedFood, setSelectedFood] = useState(null);
+  const [foodList, setFoodList] = useState([])
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const [selectedFood, setSelectedFood] = useState(null)
 
-    const fetchFoodList = async () => {
-        const data = await getFoodList();
-        setFoodList(data || []);
-    };
+  // Filter states
+  const [searchName, setSearchName] = useState("")
+  const [filterCategory, setFilterCategory] = useState("")
+  const [filterPriceRange, setFilterPriceRange] = useState([0, 1000000])
+  const [filterOptions, setFilterOptions] = useState([]) // array các option muốn filter
 
-    useEffect(() => {
-        fetchFoodList();
-    }, []);
+  const fetchFoodList = async () => {
+    const data = await getFoodList()
+    setFoodList(data || [])
+  }
 
-    // Hàm parse options
-    const parseOptions = (options) => {
-        if (!options) return [];
-        if (Array.isArray(options)) return options;
-        if (typeof options === "string") {
-            try {
-                return JSON.parse(options);
-            } catch (error) {
-                console.error("Lỗi parse options:", error);
-            }
-        }
-        return [];
-    };
+  useEffect(() => {
+    fetchFoodList()
+  }, [])
 
-    return (
-        <div className="p-6 space-y-6 relative">
-            <h1 className="text-2xl font-bold">Food Page</h1>
+  const parseOptions = (options) => {
+    if (!options) return []
+    return Array.isArray(options) ? options : JSON.parse(options || "[]")
+  }
 
-            {/* Danh sách món ăn */}
-            <div className="space-y-4">
-                {foodList.length === 0 ? (
-                    <p>Chưa có món ăn</p>
-                ) : (
-                    foodList.map((food) => {
-                        const opts = parseOptions(food.options);
+  // Hàm filter tổng quát
+  const getFilteredFoodList = () => {
+    return foodList.filter(food => {
+      // filter theo tên
+      if (searchName && !food.name.toLowerCase().includes(searchName.toLowerCase()))
+        return false
 
-                        return (
-                            <Card
-                                key={food.id}
-                                className="shadow-md border rounded-lg overflow-hidden flex flex-row h-60 w-full hover:shadow-lg transition"
-                            >
-                                {/* Ảnh món ăn */}
-                                {food.image_url ? (
-                                    <div className="relative w-1/4 h-full">
-                                        <Image
-                                            src={food.image_url}
-                                            alt={food.name}
-                                            fill
-                                            style={{ objectFit: "contain" }}
-                                            sizes="(max-width: 768px) 100vw, 33vw"
-                                            priority
-                                            className="rounded-l"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="w-1/4 h-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                                        Không có ảnh
-                                    </div>
-                                )}
+      // filter theo category
+      if (filterCategory && food.category !== filterCategory) return false
 
-                                {/* Thông tin món ăn */}
-                                <div className="w-1/2 p-4 flex flex-col justify-between">
+      // filter theo giá
+      if (food.price < filterPriceRange[0] || food.price > filterPriceRange[1]) return false
 
-                                    <CardHeader className="p-0">
-                                        <CardTitle>{food.name}</CardTitle>
-                                        <CardDescription>
-                                            {food.sub_category || "Không có mô tả"}
-                                        </CardDescription>
-                                    </CardHeader>
+      // filter theo options
+      if (filterOptions.length > 0) {
+        const opts = parseOptions(food.options)
+        const hasAll = filterOptions.every(opt => opts.includes(opt))
+        if (!hasAll) return false
+      }
 
-                                    <CardContent className="p-0">
-                                        <p className="font-semibold">Giá: {food.price}đ</p>
-                                        {food.category && (
-                                            <p className="text-sm text-gray-500">
-                                                Danh mục: {food.category}
-                                            </p>
-                                        )}
-                                    </CardContent>
+      return true
+    })
+  }
 
-                                    <CardContent className="p-0 text-sm">
-                                        {opts.length > 0 ? (
-                                            <ul className="list-disc ml-4 text-gray-700">
-                                                {opts.map((opt, idx) => (
-                                                    <li key={idx}>{opt}</li>
-                                                ))}
-                                            </ul>
-                                        ) : (
-                                            <p className="text-gray-500">Chỉ có 1 option duy nhất</p>
-                                        )}
-                                    </CardContent>
+  const filteredFoodList = getFilteredFoodList()
 
-                                </div>
+  return (
+    <div className="p-6">
+      {/* HEADER */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Foods</h1>
 
-                                {/* Nút Update/Delete */}
-                                <div className="flex gap-2 w-1/4 p-4 h-full items-end justify-end">
-                                    <button
-                                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                        onClick={() => {
-                                            setSelectedFood(food);
-                                            setIsUpdateModalOpen(true); // mở modal update
-                                        }}
-                                    >
-                                        Update
-                                    </button>
+        {/* Search */}
+        <SearchByName value={searchName} onChange={setSearchName} />
 
-                                    <button
-                                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                                        onClick={() => {
-                                            setSelectedFood(food);
-                                            setIsDeleteModalOpen(true);
-                                            console.log("Deleting food:", food);
-                                        }}
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            </Card>
-                        );
-                    })
-                )}
-            </div>
+        {/* Add food */}
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Add food
+        </button>
+      </div>
 
-            {/* Nút mở modal thêm món */}
-            <Card
-                className="cursor-pointer flex items-center justify-center p-6 hover:shadow-lg transition border rounded-lg"
-                onClick={() => setIsAddModalOpen(true)}
-            >
-                <CardHeader className="text-center">
-                    <CardTitle className="text-lg">+ Thêm món ăn</CardTitle>
-                </CardHeader>
-            </Card>
+      {/* FILTER UI ( category + price) */}
+      {/* <div className="mb-4 flex flex-wrap gap-3">
+        <select
+          value={filterCategory}
+          onChange={e => setFilterCategory(e.target.value)}
+          className="border px-2 py-1 rounded"
+        >
+          <option value="">All categories</option>
+          <option value="Beverage">Beverage</option>
+          <option value="Food">Food</option>
+        </select>
 
-            {/* Modal thêm món */}
-            {isAddModalOpen && (
-                <AddFoodModal
-                    open={isAddModalOpen}
-                    onOpenChange={(state) => {
-                        setIsAddModalOpen(state);
-                        if (!state) fetchFoodList();
-                    }}
-                />
-            )}
+        <input
+          type="number"
+          placeholder="Min price"
+          value={filterPriceRange[0]}
+          onChange={e => setFilterPriceRange([Number(e.target.value), filterPriceRange[1]])}
+          className="border px-2 py-1 rounded w-24"
+        />
+        <input
+          type="number"
+          placeholder="Max price"
+          value={filterPriceRange[1]}
+          onChange={e => setFilterPriceRange([filterPriceRange[0], Number(e.target.value)])}
+          className="border px-2 py-1 rounded w-24"
+        />
+      </div> */}
 
-            {/* Modal Update */}
-            {isUpdateModalOpen && selectedFood && (
-                <UpdateFoodModal
-                    open={isUpdateModalOpen}
-                    food={selectedFood}
-                    onOpenChange={(state) => {
-                        setIsUpdateModalOpen(state);
-                        if (!state) setSelectedFood(null); // reset khi đóng
-                        fetchFoodList(); // refresh danh sách
-                    }}
-                />
-            )}
+      {/* CONTENT */}
+      {filteredFoodList.length === 0 ? (
+        <p className="text-gray-500">No foods</p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full border-collapse text-sm bg-white">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="border px-4 py-3 text-left font-semibold">Image</th>
+                <th className="border px-4 py-3 text-left font-semibold">Name</th>
+                <th className="border px-4 py-3 text-left font-semibold">Category</th>
+                <th className="border px-4 py-3 text-left font-semibold">Options</th>
+                <th className="border px-4 py-3 text-right font-semibold">Price</th>
+                <th className="border px-4 py-3 text-center font-semibold">Action</th>
+              </tr>
+            </thead>
 
-            {/* Modal Delete */}
-            {isDeleteModalOpen && selectedFood && (
-                <DeleteFoodModal
-                    open={isDeleteModalOpen}
-                    food={selectedFood}
-                    onOpenChange={(state) => {
-                        setIsDeleteModalOpen(state);
-                        if (!state) setSelectedFood(null); // reset khi đóng
-                        fetchFoodList();
-                    }}
-                />
-            )}
+            <tbody>
+              {filteredFoodList.map((food, index) => {
+                const opts = parseOptions(food.options)
 
+                return (
+                  <tr
+                    key={food.id}
+                    className={`hover:bg-gray-50 ${index % 2 === 1 ? "bg-gray-50/50" : ""}`}
+                  >
+                    {/* IMAGE */}
+                    <td className="border px-4 py-2">
+                      <div className="relative w-14 h-14">
+                        {food.image_url ? (
+                          <Image
+                            src={food.image_url}
+                            alt={food.name}
+                            fill
+                            className="object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                            No image
+                          </div>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* NAME */}
+                    <td className="border px-4 py-2 font-medium">
+                      {food.name}
+                      <div className="text-xs text-gray-500">{food.sub_category || "-"}</div>
+                    </td>
+
+                    {/* CATEGORY */}
+                    <td className="border px-4 py-2 text-gray-600">{food.category || "-"}</td>
+
+                    {/* OPTIONS */}
+                    <td className="border px-4 py-2">
+                      <div className="flex flex-wrap gap-1">
+                        {opts.length > 0 ? (
+                          opts.map((opt, idx) => (
+                            <span key={idx} className="px-2 py-0.5 text-xs bg-gray-100 rounded">
+                              {opt}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* PRICE */}
+                    <td className="border px-4 py-2 text-right font-semibold text-green-600">
+                      {food.price.toLocaleString()}đ
+                    </td>
+
+                    {/* ACTION */}
+                    <td className="border px-4 py-2">
+                      <div className="flex justify-center gap-3">
+                        <button
+                          title="Edit"
+                          className="p-2 rounded text-blue-600 hover:bg-blue-100"
+                          onClick={() => {
+                            setSelectedFood(food)
+                            setIsUpdateModalOpen(true)
+                          }}
+                        >
+                          <Pencil size={16} />
+                        </button>
+
+                        <button
+                          title="Delete"
+                          className="p-2 rounded text-red-600 hover:bg-red-100"
+                          onClick={() => {
+                            setSelectedFood(food)
+                            setIsDeleteModalOpen(true)
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
-    );
+      )}
+
+      {/* MODALS */}
+      {isAddModalOpen && (
+        <AddFoodModal
+          open={isAddModalOpen}
+          onOpenChange={(state) => {
+            setIsAddModalOpen(state)
+            if (!state) fetchFoodList()
+          }}
+        />
+      )}
+
+      {isUpdateModalOpen && selectedFood && (
+        <UpdateFoodModal
+          open={isUpdateModalOpen}
+          food={selectedFood}
+          onOpenChange={(state) => {
+            setIsUpdateModalOpen(state)
+            if (!state) setSelectedFood(null)
+            if (!state) fetchFoodList()
+          }}
+        />
+      )}
+
+      {isDeleteModalOpen && selectedFood && (
+        <DeleteFoodModal
+          open={isDeleteModalOpen}
+          food={selectedFood}
+          onOpenChange={(state) => {
+            setIsDeleteModalOpen(state)
+            if (!state) setSelectedFood(null)
+            if (!state) fetchFoodList()
+          }}
+        />
+      )}
+    </div>
+  )
 }
