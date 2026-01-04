@@ -74,9 +74,9 @@ export default function AddFoodModal({ open, onOpenChange }) {
         e.preventDefault();   // ngăn reload trang
         setError("");
 
-        // kiểm tra bắt buộc: tên và giá
-        if (!name || !price) {
-            setError("Tên món và giá là bắt buộc");
+        // kiểm tra bắt buộc: tên, giá và danh mục
+        if (!name || !price || !category) {
+            setError("Tên món, giá và danh mục là bắt buộc");
             return;
         }
 
