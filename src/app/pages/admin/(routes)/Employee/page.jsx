@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { Pencil, Trash2, RotateCcw } from "lucide-react";
 
-import { getEmployeeList } from "../../service/Employee/Employee_list";
-import AddEmployeeModal from "../../service/Employee/AddEmployeeModal";
-import UpdateEmployeeModal from "../../service/Employee/UpdateEmployeeModal";
-import DeleteEmployeeModal from "../../service/Employee/DeleteEmployeeModal";
-import ResetPasswordModal from "../../service/Employee/ResetEmployeePasswordModal";
-import EmployeelistUI from "../../service/Employee/EmpolyeelistUI";
-import Filterlist from "../../components/SearchBar";
+import { getEmployeeList } from "../../../../features/Employee/Employee_list";
+import AddEmployeeModal from "../../../../features/Employee/AddEmployeeModal";
+import UpdateEmployeeModal from "../../../../features/Employee/UpdateEmployeeModal";
+import DeleteEmployeeModal from "../../../../features/Employee/DeleteEmployeeModal";
+import ResetPasswordModal from "../../../../features/Employee/ResetEmployeePasswordModal";
+import EmployeelistUI from "../../../../features/Employee/EmpolyeelistUI";
+import Filterlist from "../../../../components/layout/SearchBar";
 
 export default function EmployeePage() {
     const [employees, setEmployees] = useState([]);

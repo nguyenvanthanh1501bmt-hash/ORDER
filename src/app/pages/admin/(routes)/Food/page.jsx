@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useState } from "react"
-import { getFoodList } from "../../service/Food/Food_list"
+import { getFoodList } from "../../../../features/Food/Food_list"
 
-import AddFoodModal from "../../service/Food/AddFoodModal"
-import UpdateFoodModal from "../../service/Food/UpdateFoodModal"
-import DeleteFoodModal from "../../service/Food/DeleteFoodModal"
+import AddFoodModal from "../../../../features/Food/AddFoodModal"
+import UpdateFoodModal from "../../../../features/Food/UpdateFoodModal"
+import DeleteFoodModal from "../../../../features/Food/DeleteFoodModal"
 
-import FoodTable from "../../service/Food/FoodlistUI"
-import Filterlist from "../../components/SearchBar"
+import FoodTable from "../../../../features/Food/FoodlistUI"
+import Filterlist from "../../../../components/layout/SearchBar"
 
 export default function Foodpage() {
   const [foodList, setFoodList] = useState([])

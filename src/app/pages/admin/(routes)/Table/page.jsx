@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from "react"
-import { getTableList } from "../../service/Table/Table_list"
-import AddTableModal from "../../service/Table/AddTableModal"
-import UpdateTableModal from "../../service/Table/UpdateTableModal"
-import DeleteTableModal from "../../service/Table/DeleteTableModal"
-import TablelistUI from "../../service/Table/TablelistUI"
-import Filterlist from "../../components/SearchBar"
-import { formatDate } from "../../service/helper"
+import { getTableList } from "../../../../features/Table/Table_list"
+import AddTableModal from "../../../../features/Table/AddTableModal"
+import UpdateTableModal from "../../../../features/Table/UpdateTableModal"
+import DeleteTableModal from "../../../../features/Table/DeleteTableModal"
+import TablelistUI from "../../../../features/Table/TablelistUI"
+import Filterlist from "../../../../components/layout/SearchBar"
+import { formatDate } from "../../../../features/helper"
 
 
 export default function Tablepage() {

@@ -1,7 +1,7 @@
 'use client';
 
 import { Pencil, Trash2 } from "lucide-react";
-import { formatDate } from "../../service/helper";
+import { formatDate } from "../helper";
 
 export default function TablelistUI({ tables = [], onEdit, onDelete }) {
   if (tables.length === 0) {
