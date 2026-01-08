@@ -1,91 +1,144 @@
 'use client'
 
+import { Trash2, ShoppingBag } from 'lucide-react'
+
 export default function OrderPreview({
   items = [],
   onUpdateNote,
   onUpdateQuantity,
   onDeleteItem,
 }) {
-  if (items.length === 0) {
-    return <p className="text-gray-400 italic">No items in order</p>
-  }
-
   const total = items.reduce(
     (sum, item) => sum + item.price * (item.quantity ?? 1),
     0
   )
 
+  const handlesubmitorder = () => {
+    console.log("Order submitted:", items)
+  }
+
   return (
-    <div className="border rounded-lg p-6 flex flex-col h-full bg-white shadow-md">
-      <h2 className="font-bold text-xl mb-5 border-b pb-2">
-        Order Preview
-      </h2>
+    <div className="flex flex-col h-full bg-white rounded-xl shadow-lg border">
 
-      <div className="flex-1 overflow-y-auto space-y-4">
-        {items.map((item, index) => (
-          <div key={item.id} className="flex justify-between items-start border-b pb-4">
-            <div className="flex-1">
-              <p className="text-gray-700 font-semibold">
-                {index + 1}. {item.name}
-              </p>
-
-              {/* Quantity & Size */}
-              <div className="flex items-center gap-6 mt-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-600">Qty:</span>
-                  <button
-                    className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
-                    onClick={() =>
-                      onUpdateQuantity?.(item.id, Math.max((item.quantity ?? 1) - 1, 1))
-                    }
-                  >
-                    -
-                  </button>
-                  <span className="px-2">{item.quantity ?? 1}</span>
-                  <button
-                    className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
-                    onClick={() =>
-                      onUpdateQuantity?.(item.id, (item.quantity ?? 1) + 1)
-                    }
-                  >
-                    +
-                  </button>
-                </div>
-
-                <div>
-                  <span className="font-medium text-gray-600">Size:</span>
-                  <span className="ml-1 text-gray-800">{item.selectedSize || 'N/A'}</span>
-                </div>
-              </div>
-
-              {/* Note */}
-              <textarea
-                rows={1}
-                className="mt-2 w-full border border-gray-300 rounded-lg px-3 py-1 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Add a note..."
-                value={item.note || ''}
-                onChange={(e) =>
-                  onUpdateNote?.(item.id, e.target.value)
-                }
-              />
-            </div>
-
-            {/* Price */}
-            <p className="font-semibold text-gray-800 ml-4 whitespace-nowrap">
-              {(item.price * (item.quantity ?? 1)).toLocaleString()} ₫
-            </p>
-          </div>
-        ))}
+      {/* Header */}
+      <div className="px-6 py-4 border-b">
+        <h2 className="text-xl font-bold text-gray-800">
+          Order Preview
+        </h2>
       </div>
 
-      {/* Total + Confirm */}
-      <div className="border-t pt-4 mt-6">
+      {/* Item list */}
+      <div className="flex-1 overflow-y-auto px-4 py-4">
+        {items.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-gray-400 select-none">
+            <ShoppingBag size={48} className="mb-3 opacity-40" />
+            <p className="text-sm italic">
+              No items added yet
+            </p>
+            <p className="text-xs mt-1">
+              Select food from menu to start order
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {items.map((item, index) => (
+              <div
+                key={item.orderItemId}
+                className="rounded-lg border bg-gray-50 p-4 hover:shadow-sm transition"
+              >
+                {/* Top row */}
+                <div className="flex justify-between items-start">
+                  <p className="font-semibold text-gray-800">
+                    {index + 1}. {item.name}
+                  </p>
+
+                  <button
+                    onClick={() => onDeleteItem?.(item.orderItemId)}
+                    className="text-gray-400 hover:text-red-500 cursor-pointer transition"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+
+                {/* Qty & Size */}
+                <div className="flex justify-between items-center mt-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center border rounded-md overflow-hidden">
+                      <button
+                        className="px-3 py-1 bg-white hover:bg-gray-100"
+                        onClick={() =>
+                          onUpdateQuantity?.(
+                            item.orderItemId,
+                            Math.max(item.quantity - 1, 1)
+                          )
+                        }
+                      >
+                        −
+                      </button>
+
+                      <span className="px-3 text-sm font-medium">
+                        {item.quantity}
+                      </span>
+
+                      <button
+                        className="px-3 py-1 bg-white hover:bg-gray-100"
+                        onClick={() =>
+                          onUpdateQuantity?.(
+                            item.orderItemId,
+                            item.quantity + 1
+                          )
+                        }
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <span className="text-sm text-gray-600">
+                      Size: <b>{item.selectedSize || 'N/A'}</b>
+                    </span>
+                  </div>
+
+                  <p className="font-semibold text-gray-700">
+                    {(item.price * item.quantity).toLocaleString()} ₫
+                  </p>
+                </div>
+
+                {/* Note */}
+                <textarea
+                  rows={1}
+                  className="mt-3 w-full rounded-md border px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-gray-400 focus:outline-none"
+                  placeholder="Note for kitchen..."
+                  value={item.note || ''}
+                  onChange={(e) =>
+                    onUpdateNote?.(item.orderItemId, e.target.value)
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="border-t bg-white px-6 py-4 sticky bottom-0">
         <div className="flex justify-between items-center mb-4">
-          <span className="font-semibold text-lg">Total</span>
-          <span className="font-bold text-xl text-gray-600">{total.toLocaleString()} ₫</span>
+          <span className="text-lg font-semibold text-gray-700">
+            Total
+          </span>
+          <span className="text-2xl font-bold text-gray-800">
+            {total.toLocaleString()} ₫
+          </span>
         </div>
 
-        <button className="w-full bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition">
+        <button
+          disabled={items.length === 0}
+          className={`w-full py-3 rounded-lg font-semibold transition
+            ${items.length === 0
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-gray-800 text-white hover:bg-gray-900'
+            }`}
+          onClick={() => {handlesubmitorder()}}
+        >
           Confirm Order
         </button>
       </div>

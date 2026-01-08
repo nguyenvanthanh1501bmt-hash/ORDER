@@ -5,10 +5,12 @@ import { useState } from "react"
 export default function ResetPasswordModal({ open, onOpenChange, employee }) {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState(null)
+  const [error, setError] = useState(null)
 
   const handleResetPassword = async () => {
     setLoading(true)
     setMessage(null)
+    setError(null)
 
     try {
       const res = await fetch('/api/admin/reset-password-staff', {
@@ -20,9 +22,9 @@ export default function ResetPasswordModal({ open, onOpenChange, employee }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || "Có lỗi xảy ra")
 
-      setMessage(`Email reset password đã được gửi tới: ${employee.email}`)
+      setMessage(`Email reset password đã được gửi tới ${employee.email}`)
     } catch (err) {
-      setMessage(err.message)
+      setError(err.message)
     } finally {
       setLoading(false)
     }
@@ -31,28 +33,63 @@ export default function ResetPasswordModal({ open, onOpenChange, employee }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-96">
-        <h2 className="text-xl font-bold mb-4">Reset Password</h2>
-        <p className="mb-4">Bạn có chắc muốn reset mật khẩu cho <span className="font-semibold">{employee.name}</span>?</p>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={() => onOpenChange(false)}
+    >
+      <div
+        className="w-full max-w-md rounded-xl bg-white shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="border-b px-6 py-4">
+          <h2 className="text-lg font-semibold">
+            Reset password
+          </h2>
+          <p className="text-sm text-gray-500">
+            Một email reset mật khẩu sẽ được gửi đi
+          </p>
+        </div>
 
-        {message && <p className="mb-4 text-center text-sm">{message}</p>}
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          <p className="text-sm text-gray-700">
+            Bạn có chắc chắn muốn reset mật khẩu cho
+            <span className="font-semibold"> {employee?.name}</span>?
+          </p>
 
-        <div className="flex gap-2">
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-            onClick={handleResetPassword}
-            disabled={loading}
-          >
-            {loading ? "Sending..." : "Send Reset Email"}
-          </button>
+          {message && (
+            <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+              {message}
+            </p>
+          )}
 
-          <button
-            className="bg-gray-300 px-4 py-2 rounded"
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
-          </button>
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              disabled={loading}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {loading ? "Sending..." : "Send reset email"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

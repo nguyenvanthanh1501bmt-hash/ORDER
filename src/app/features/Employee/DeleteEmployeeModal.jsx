@@ -26,7 +26,7 @@ export default function DeleteEmployeeModal({ open, onOpenChange, employee }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || "Lỗi xóa nhân viên")
 
-      onOpenChange(false) // đóng modal sau khi xóa thành công
+      onOpenChange(false)
     } catch (error) {
       setErr(error.message)
     } finally {
@@ -37,29 +37,57 @@ export default function DeleteEmployeeModal({ open, onOpenChange, employee }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-96">
-        <h1 className="text-xl font-bold mb-4">Delete staff: {employee?.name}?</h1>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={() => onOpenChange(false)}
+    >
+      <div
+        className="w-full max-w-md rounded-xl bg-white shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="border-b px-6 py-4">
+          <h2 className="text-lg font-semibold text-red-600">
+            Delete staff
+          </h2>
+          <p className="text-sm text-gray-500">
+            Hành động này không thể hoàn tác
+          </p>
+        </div>
 
-        {err && <p className="text-red-500 mb-2">{err}</p>}
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          <p className="text-sm text-gray-700">
+            Bạn có chắc chắn muốn xóa nhân viên
+            <span className="font-semibold"> {employee?.name}</span> không?
+          </p>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className="bg-red-600 text-white px-4 py-2 rounded"
-            onClick={handleDelete}
-            disabled={loading}
-          >
-            {loading ? "Deleting..." : "Delete"}
-          </button>
+          {err && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {err}
+            </p>
+          )}
 
-          <button
-            type="button"
-            className="bg-gray-300 px-4 py-2 rounded"
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
-          </button>
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={loading}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+            >
+              {loading ? "Deleting..." : "Delete"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -60,9 +60,20 @@ const filteredTableList = tableList.filter((table) => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          className="
+            inline-flex items-center gap-2
+            px-4 py-2.5
+            bg-blue-600 text-white text-sm font-medium
+            rounded-lg
+            shadow-sm
+            transition
+            hover:bg-blue-700
+            focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer
+            active:scale-[0.98]
+          "
         >
-          Add table
+          <span className="text-lg leading-none">+</span>
+          Add Table
         </button>
       </div>
 

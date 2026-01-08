@@ -14,6 +14,10 @@ export default function UpdateTableModal({ open, onOpenChange, table }) {
     }
   }, [table]);
 
+  useEffect(() => {
+    if (!open) return;
+  }, [open, onOpenChange]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -33,7 +37,7 @@ export default function UpdateTableModal({ open, onOpenChange, table }) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Lỗi cập nhật bàn");
+        setError(data.message || "Failed to update table");
         return;
       }
 
@@ -53,42 +57,52 @@ export default function UpdateTableModal({ open, onOpenChange, table }) {
       onClick={() => onOpenChange(false)}
     >
       <div
-        className="bg-white p-6 rounded-lg w-96 shadow"
+        className="bg-white w-full max-w-sm rounded-xl shadow-lg p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <form onSubmit={handleSubmit}>
-          <h1 className="text-xl font-semibold mb-4">Update Table</h1>
+        {/* Header */}
+        <div className="mb-5">
+          <h1 className="text-lg font-semibold">Update Table</h1>
+          <p className="text-sm text-gray-500">
+            Edit table information
+          </p>
+        </div>
 
-          <label className="block mb-1 text-sm font-medium">
-            Table name
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="border p-2 w-full mb-4 rounded focus:ring-2 focus:ring-blue-500"
-            required
-          />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block mb-1 text-sm font-medium">
+              Table Name
+            </label>
+            <input
+              autoFocus
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              required
+            />
+          </div>
 
           {error && (
-            <p className="text-red-500 text-sm mb-3">{error}</p>
+            <p className="text-sm text-red-500">{error}</p>
           )}
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
-              className="bg-gray-200 px-4 py-2 rounded"
+              disabled={loading}
+              className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
               onClick={() => onOpenChange(false)}
             >
-              Hủy
+              Cancel
             </button>
 
             <button
               type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded"
               disabled={loading}
+              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
             >
-              {loading ? "Đang lưu..." : "Lưu"}
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </form>
