@@ -1,6 +1,7 @@
 'use client'
 
 import { Trash2, ShoppingBag } from 'lucide-react'
+import { addOrder } from './CallingAddorderAPI'
 
 export default function OrderPreview({
   items = [],
@@ -13,8 +14,14 @@ export default function OrderPreview({
     0
   )
 
-  const handlesubmitorder = () => {
-    console.log("Order submitted:", items)
+  const handlesubmitorder = async () => {
+    try {
+      // await addOrder({ tableId: 6, items })
+      await addOrder({ tableId: 6, menuItems: items })
+      console.log("Order submitted successfully", items)
+    } catch (error) {
+      console.error("Failed to submit order:", error)
+    }
   }
 
   return (

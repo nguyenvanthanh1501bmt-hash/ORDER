@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/api/adminClient'
 import { NextResponse } from 'next/server'
+import { getSizeExtraPrice } from '../../features/helper'
 
 export async function POST(req) {
   /**
@@ -60,7 +61,7 @@ export async function POST(req) {
        - KHÔNG tin dữ liệu client
        - Giá và tên phải snapshot từ DB
     ============================================================ */
-
+ 
     const menuIds = items.map(i => i.menu_item_id)
 
     const { data: menus, error: menuErr } = await supabaseAdmin
@@ -84,18 +85,28 @@ export async function POST(req) {
       const menu = menus.find(m => m.id === item.menu_item_id)
       if (!menu) continue
 
-      totalAdded += menu.price * item.quantity
+      const sizeText = item.selected_options?.size // "Size L"
+      console.log("Selected size:", item)
+      const sizeExtra = getSizeExtraPrice(item.option, sizeText)
+
+      const finalUnitPrice = menu.price + sizeExtra
+      const itemTotal = finalUnitPrice * item.quantity
+
+      totalAdded += itemTotal
 
       await supabaseAdmin
         .from('order_items')
         .insert({
           order_id: order.id,
           menu_item_id: menu.id,
-          base_item_name: menu.name,   // snapshot tên
-          unit_price: menu.price,      // snapshot giá
+          base_item_name: menu.name,
+          unit_price: finalUnitPrice,   // giá sau khi cộng size
           quantity: item.quantity,
-          note: item.note || null,     // ✅ NOTE ĐÚNG CHỖ
-          selected_options: item.selected_options || {}
+          note: item.note || null,
+          selected_options: {
+            ...item.selected_options,
+            size_extra: sizeExtra
+          }
         })
     }
 

@@ -35,6 +35,7 @@ export default function Home() {
           selectedSize: food.selectedSize,
           quantity: 1,
           note: '',
+          options: food.options || null,
         },
       ]
     })
