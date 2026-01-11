@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import useRoleRedirect from '@/hooks/useRoleRedirect'
+import { getOrdersAvailable } from '@/app/features/Staff/OrderAvailable'
+import SupportShowOrderItems from '@/app/features/Staff/SupportOrderItems'
 
 export default function StaffPage() {
   useRoleRedirect('staff')
@@ -9,73 +11,124 @@ export default function StaffPage() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
 
+  /**
+   * expandedOrders:
+   * - Dùng Set để lưu các order.id đang mở
+   * - Mỗi order mở / đóng độc lập
+   */
+  const [expandedOrders, setExpandedOrders] = useState(new Set())
+
   useEffect(() => {
-    loadOrders()
-    console.log("StaffPage mounted, loading orders")
+    async function fetchOrders() {
+      try {
+        const data = await getOrdersAvailable()
+        setOrders(data)
+      } catch (err) {
+        console.error('Error fetching orders:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchOrders()
   }, [])
 
-  async function loadOrders() {
-    setLoading(true)
+  if (loading) return <p>Loading...</p>
 
-    try {
-      const res = await fetch('/api/orders/get-order', {
-        cache: 'no-store',
-      })
+  /**
+   * Toggle mở / đóng một order
+   */
+  const toggleOrder = (orderId) => {
+    setExpandedOrders(prev => {
+      const next = new Set(prev)
 
-      if (!res.ok) {
-        throw new Error('Failed to load orders')
+      if (next.has(orderId)) {
+        next.delete(orderId)
+      } else {
+        next.add(orderId)
       }
 
-      const data = await res.json()
-      setOrders(data || [])
-    } catch (err) {
-      console.error('LOAD ORDERS ERROR:', err)
-    } finally {
-      setLoading(false)
-    }
+      return next
+    })
   }
 
   return (
-    <div className="p-4 space-y-4">
-      <h1 className="text-xl font-bold">Staff Orders</h1>
+    <div className="mx-auto max-w-3xl">
+      <h1 className="mb-4 text-2xl font-bold">
+        Orders Pending Staff Approval
+      </h1>
 
-      {loading && <p>Loading...</p>}
+      {orders.length === 0 ? (
+        <p className="text-gray-500">
+          No pending orders for staff approval.
+        </p>
+      ) : (
+        orders.map(order => {
+          const isOpen = expandedOrders.has(order.id)
 
-      {!loading && orders.length === 0 && (
-        <p className="text-gray-500">No pending orders</p>
-      )}
-
-      {orders.map(order => (
-        <div
-          key={order.id}
-          className="border rounded-lg p-3 bg-white shadow-sm"
-        >
-          <div className="font-semibold mb-2">
-            {order.bills?.tables?.name}
-          </div>
-
-          {order.order_items?.map(item => (
+          return (
             <div
-              key={item.id}
-              className="text-sm flex justify-between"
+              key={order.id}
+              className={`
+                mb-4 rounded-lg border bg-white
+                transition-shadow
+                ${isOpen ? 'shadow-md border-gray-300' : 'border-gray-200 hover:shadow-sm'}
+              `}
             >
-              <span>
-                {item.base_item_name} × {item.quantity}
-              </span>
+              {/* HEADER */}
+              <div
+                className="
+                  flex items-center justify-between
+                  cursor-pointer select-none
+                  px-4 py-3
+                "
+                onClick={() => toggleOrder(order.id)}
+              >
+                <div className="space-y-0.5">
+                  <p className="text-sm text-gray-500">
+                    Table
+                    <span className="ml-1 font-medium text-gray-800">
+                      {order.bills?.tables?.name}
+                    </span>
+                  </p>
 
-              {item.note && (
-                <span className="italic text-gray-500">
-                  ({item.note})
+                  <p className="text-xs text-gray-400">
+                    Order ID: {order.id}
+                  </p>
+                </div>
+
+                {/* Chevron */}
+                <span
+                  className={`
+                    text-gray-400 transition-transform duration-300
+                    ${isOpen ? 'rotate-180' : ''}
+                  `}
+                >
+                  ▼
                 </span>
-              )}
-            </div>
-          ))}
+              </div>
 
-          <div className="text-xs text-gray-400 mt-2">
-            {new Date(order.created_at).toLocaleTimeString()}
-          </div>
-        </div>
-      ))}
+              {/* DROPDOWN */}
+              <div
+                className={`
+                  overflow-hidden
+                  transition-[max-height,opacity,transform]
+                  duration-300
+                  ease-out
+                  ${
+                    isOpen
+                      ? 'max-h-[600px] opacity-100 translate-y-0'
+                      : 'max-h-0 opacity-0 -translate-y-2'
+                  }
+                `}
+              >
+                <div className="border-t bg-gray-50 px-4 pb-4">
+                  <SupportShowOrderItems order={order} />
+                </div>
+              </div>
+            </div>
+          )
+        })
+      )}
     </div>
   )
 }
