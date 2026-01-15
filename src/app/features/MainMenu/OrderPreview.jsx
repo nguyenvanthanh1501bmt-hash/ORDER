@@ -2,25 +2,37 @@
 
 import { Trash2, ShoppingBag } from 'lucide-react'
 import { addOrder } from './CallingAddorderAPI'
+import CustomAlert from '@/app/components/CustomAlert'
+import { useState } from 'react'
 
 export default function OrderPreview({
   items = [],
   onUpdateNote,
   onUpdateQuantity,
   onDeleteItem,
+  onClearItem,
 }) {
+  const [alertText, setAlertText] = useState('')
+
   const total = items.reduce(
     (sum, item) => sum + item.price * (item.quantity ?? 1),
     0
   )
 
-  const handlesubmitorder = async () => {
+  const handlesubmitOrder = async () => {
     try {
-      // await addOrder({ tableId: 6, items })
       await addOrder({ tableId: 6, menuItems: items })
-      console.log("Order submitted successfully", items)
+
+      onClearItem?.()
+      setAlertText('Order submitted successfully')
+
+      setTimeout(() => {
+        setAlertText('')
+      }, 2000)
+
     } catch (error) {
-      console.error("Failed to submit order:", error)
+      console.error('Failed to submit order:', error)
+      setAlertText('Failed to submit order')
     }
   }
 
@@ -144,11 +156,15 @@ export default function OrderPreview({
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-gray-800 text-white hover:bg-gray-900'
             }`}
-          onClick={() => {handlesubmitorder()}}
+          onClick={() => {handlesubmitOrder()}}
         >
           Confirm Order
         </button>
+          
+        
+
       </div>
+      <CustomAlert text={alertText} />  
     </div>
   )
 }

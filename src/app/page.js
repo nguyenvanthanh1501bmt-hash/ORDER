@@ -9,6 +9,8 @@ export default function Home() {
   const [foodList, setFoodList] = useState([])
   const [selectedItems, setSelectedItems] = useState([])
 
+  const clearOrder = () => {setSelectedItems([])}
+
   const handleSelectItem = (food) => {
     setSelectedItems((prev) => {
       const existedItem = prev.find(
@@ -76,7 +78,7 @@ export default function Home() {
   }, [])
 
   return (
-    // 🔴 KHÓA SCROLL TOÀN TRANG
+    // KHÓA SCROLL TOÀN TRANG
     <div className="h-screen overflow-hidden bg-zinc-50">
       <div className="flex h-full gap-8 p-6">
 
@@ -95,6 +97,7 @@ export default function Home() {
             onUpdateNote={handleUpdateItemNote}
             onUpdateQuantity={handleUpdateItemQuantity}
             onDeleteItem={handleDeleteItem}
+            onClearItem={clearOrder}
           />
         </div>
 

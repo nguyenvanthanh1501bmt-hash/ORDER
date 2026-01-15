@@ -3,19 +3,13 @@
 import { useEffect, useState } from 'react'
 import useRoleRedirect from '@/hooks/useRoleRedirect'
 import { getOrdersAvailable } from '@/app/features/Staff/OrderAvailable'
-import SupportShowOrderItems from '@/app/features/Staff/SupportOrderItems'
+import OrderAvailableUI from '@/app/features/Staff/OrderAvailableUI'
 
 export default function StaffPage() {
   useRoleRedirect('staff')
 
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
-
-  /**
-   * expandedOrders:
-   * - Dùng Set để lưu các order.id đang mở
-   * - Mỗi order mở / đóng độc lập
-   */
   const [expandedOrders, setExpandedOrders] = useState(new Set())
 
   useEffect(() => {
@@ -32,103 +26,129 @@ export default function StaffPage() {
     fetchOrders()
   }, [])
 
-  if (loading) return <p>Loading...</p>
-
-  /**
-   * Toggle mở / đóng một order
-   */
   const toggleOrder = (orderId) => {
     setExpandedOrders(prev => {
       const next = new Set(prev)
-
-      if (next.has(orderId)) {
-        next.delete(orderId)
-      } else {
-        next.add(orderId)
-      }
-
+      next.has(orderId) ? next.delete(orderId) : next.add(orderId)
       return next
     })
   }
 
+  const handleApprove = async (orderId) => {
+    try {
+      const res = await fetch('/api/orders/update-status-order', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          status: 'accepted',
+        }),
+      })
+
+      if (!res.ok) {
+        throw new Error('Approve failed')
+      }
+
+      // CHỈ update status ở FE
+      setOrders(prev =>
+        prev.map(order =>
+          order.id === orderId
+            ? { ...order, status: 'accepted' }
+            : order
+        )
+      )
+
+      // đóng dropdown nếu đang mở
+      setExpandedOrders(prev => {
+        const next = new Set(prev)
+        next.delete(orderId)
+        return next
+      })
+
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+
+  const handleReject = async (orderId) => {
+    try {
+      const res = await fetch('/api/orders/delete-order', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId }),
+      })
+
+      if (!res.ok) {
+        throw new Error('Reject failed')
+      }
+
+      // remove order khỏi UI
+      setOrders(prev =>
+        prev.filter(order => order.id !== orderId)
+      )
+
+      // đóng dropdown nếu đang mở
+      setExpandedOrders(prev => {
+        const next = new Set(prev)
+        next.delete(orderId)
+        return next
+      })
+
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleDone = async (orderId) => {
+    try {
+      const res = await fetch('/api/orders/update-status-order', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          status: 'served',
+        }),
+      })
+
+      if (!res.ok) {
+        throw new Error('Complete failed')
+      }
+
+      // remove khỏi list sau khi complete
+      setOrders(prev =>
+        prev.filter(order => order.id !== orderId)
+      )
+
+      // đóng dropdown nếu đang mở
+      setExpandedOrders(prev => {
+        const next = new Set(prev)
+        next.delete(orderId)
+        return next
+      })
+
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+
+  if (loading) return <p>Loading...</p>
+
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-4 text-2xl font-bold">
-        Orders Pending Staff Approval
-      </h1>
-
-      {orders.length === 0 ? (
-        <p className="text-gray-500">
-          No pending orders for staff approval.
-        </p>
-      ) : (
-        orders.map(order => {
-          const isOpen = expandedOrders.has(order.id)
-
-          return (
-            <div
-              key={order.id}
-              className={`
-                mb-4 rounded-lg border bg-white
-                transition-shadow
-                ${isOpen ? 'shadow-md border-gray-300' : 'border-gray-200 hover:shadow-sm'}
-              `}
-            >
-              {/* HEADER */}
-              <div
-                className="
-                  flex items-center justify-between
-                  cursor-pointer select-none
-                  px-4 py-3
-                "
-                onClick={() => toggleOrder(order.id)}
-              >
-                <div className="space-y-0.5">
-                  <p className="text-sm text-gray-500">
-                    Table
-                    <span className="ml-1 font-medium text-gray-800">
-                      {order.bills?.tables?.name}
-                    </span>
-                  </p>
-
-                  <p className="text-xs text-gray-400">
-                    Order ID: {order.id}
-                  </p>
-                </div>
-
-                {/* Chevron */}
-                <span
-                  className={`
-                    text-gray-400 transition-transform duration-300
-                    ${isOpen ? 'rotate-180' : ''}
-                  `}
-                >
-                  ▼
-                </span>
-              </div>
-
-              {/* DROPDOWN */}
-              <div
-                className={`
-                  overflow-hidden
-                  transition-[max-height,opacity,transform]
-                  duration-300
-                  ease-out
-                  ${
-                    isOpen
-                      ? 'max-h-[600px] opacity-100 translate-y-0'
-                      : 'max-h-0 opacity-0 -translate-y-2'
-                  }
-                `}
-              >
-                <div className="border-t bg-gray-50 px-4 pb-4">
-                  <SupportShowOrderItems order={order} />
-                </div>
-              </div>
-            </div>
-          )
-        })
-      )}
-    </div>
+    <OrderAvailableUI
+      orders={orders}
+      expandedOrders={expandedOrders}
+      toggleOrder={toggleOrder}
+      onApprove={handleApprove}
+      onReject={handleReject}
+      onDone={handleDone}
+    />
   )
 }

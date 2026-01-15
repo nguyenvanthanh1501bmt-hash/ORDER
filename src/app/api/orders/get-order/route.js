@@ -29,7 +29,7 @@ export async function GET() {
           )
         )
       `)
-      .eq("status", "pending_staff_approval")
+      .in("status", ["pending_staff_approval", "accepted"])
       .order("created_at", { ascending: true });
 
     if (error) throw error;  
