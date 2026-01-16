@@ -2,39 +2,75 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookUser, Pizza, Receipt, UtensilsCrossed, LayoutGrid } from 'lucide-react'
+import {
+  BookUser,
+  Pizza,
+  Receipt,
+  UtensilsCrossed,
+  LayoutGrid,
+} from 'lucide-react'
 
-export default function SideNav() {
+export default function SideNav({ open, isMobile, onClose }) {
+  const pathname = usePathname()
+
   const menuList = [
     { id: 1, name: 'Dashboard', icon: <LayoutGrid />, path: '/pages/admin/dashboard' },
     { id: 2, name: 'Employee', icon: <BookUser />, path: '/pages/admin/Employee' },
     { id: 3, name: 'Food', icon: <Pizza />, path: '/pages/admin/Food' },
     { id: 4, name: 'Bill', icon: <Receipt />, path: '/pages/admin/Bill' },
     { id: 5, name: 'Table', icon: <UtensilsCrossed />, path: '/pages/admin/Table' },
-  ];
+  ]
 
-  const path = usePathname(); // App Router hook
+  const isActive = (menuPath) =>
+    pathname === menuPath || pathname.startsWith(menuPath + '/')
 
-  const isActive = (menuPath) => path === menuPath || path.startsWith(menuPath + '/');
+  const handleNavigate = () => {
+    if (isMobile) onClose()
+  }
 
   return (
-    <div className="h-screen p-5 border flex flex-col">
-      <div className="flex flex-col mt-5 gap-2">
-        {menuList.map((menu) => (
+    <aside
+      className={`
+        bg-white
+        border-r
+        h-full
+        z-50
+        transition-all
+        duration-300
+
+        fixed lg:relative
+        ${open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+
+        w-24 lg:w-48
+      `}
+    >
+      <div className="flex flex-col gap-2 p-3">
+        {menuList.map(menu => (
           <Link key={menu.id} href={menu.path}>
-            <h2 className={`
-              flex gap-2 items-center
-              text-gray-500 font-medium p-4
-              rounded-full cursor-pointer
-              hover:text-primary hover:bg-blue-100
-              ${isActive(menu.path) ? 'text-primary bg-blue-100' : ''}
-            `}>
+            <div
+              onClick={handleNavigate}
+              title={menu.name}
+              className={`
+                flex items-center
+                justify-center lg:justify-start
+                gap-3
+                p-3
+                rounded-xl
+                cursor-pointer
+                font-medium
+                text-gray-500
+                hover:text-primary hover:bg-blue-100
+                ${isActive(menu.path) ? 'text-primary bg-blue-100' : ''}
+              `}
+            >
               {menu.icon}
-              <span>{menu.name}</span>
-            </h2>
+              <span className="hidden lg:inline">
+                {menu.name}
+              </span>
+            </div>
           </Link>
         ))}
       </div>
-    </div>
+    </aside>
   )
 }

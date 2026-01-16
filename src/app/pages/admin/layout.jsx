@@ -1,35 +1,48 @@
 'use client'
 
-import useAuth from '@/hooks/useAuth'
-import { useEffect } from 'react'
+import { useState } from 'react'
 import useRoleRedirect from '@/hooks/useRoleRedirect'
 import SideNav from '../../components/layout/sidenav'
 import AdminHeader from '../../components/layout/adminheader'
 
-export default function DashboardLayout({ children }){
-    const { user, loading, checkingRole } = useRoleRedirect('admin')
-    
-    if (loading || checkingRole) return <h1>Loading...</h1>
-    if (!user) return null // đang redirect
+export default function DashboardLayout({ children }) {
+  const { user, loading, checkingRole } = useRoleRedirect('admin')
+  const [openNav, setOpenNav] = useState(false)
 
-    return(
-        <div>
-            <AdminHeader />
-            <div className="flex h-screen">
-                {/* Sidebar bên trái */}
-                <SideNav />
+  if (loading || checkingRole) return <h1>Loading...</h1>
+  if (!user) return null
 
-                {/* Phần còn lại của màn hình */}
-                <div className="flex-1 flex flex-col">
-                    {/* Header phía trên */}
-                    {/* Nội dung chính của từng page */}
-                    <main className="p-5 flex-1 overflow-auto">
-                        {children}  {/* Đây là nơi page (ví dụ page.jsx) được render */}
-                    </main>
-                </div>
-            </div>
+  return (
+    <div className="h-screen flex flex-col">
+      {/* Header */}
+      <AdminHeader
+        onToggleNav={() => setOpenNav(prev => !prev)}
+      />
 
-        </div>
-        
-    )
+      {/* Body */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <SideNav
+          open={openNav}
+          onClose={() => setOpenNav(false)}
+        />
+
+        {/* Main content – PUSH khi mở nav */}
+        <main
+          className={`
+            flex-1
+            p-4 md:p-5
+            overflow-auto
+            bg-gray-50
+            transition-all
+            duration-300
+
+            ${openNav ? 'ml-24 lg:ml-0' : 'ml-0'}
+          `}
+        >
+          {children}
+        </main>
+      </div>
+    </div>
+  )
 }

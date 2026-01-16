@@ -95,63 +95,80 @@ export default function UpdateFoodModal({ open, onOpenChange, food, onUpdated })
 
         {/* Body */}
         <div className="px-6 py-5 space-y-4">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Food name"
-            className="w-full rounded-lg border px-3 py-2"
-          />
+          {/* Name */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Food name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-          <input
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
-            placeholder="Price"
-            className="w-full rounded-lg border px-3 py-2"
-          />
+          {/* Price */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Price</label>
+            <input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(Number(e.target.value))}
+              className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-          <input
-            type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="Category"
-            className="w-full rounded-lg border px-3 py-2"
-          />
+          {/* Category */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Category</label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-          <input
-            type="text"
-            value={subCategory}
-            onChange={(e) => setSubCategory(e.target.value)}
-            placeholder="Sub-category"
-            className="w-full rounded-lg border px-3 py-2"
-          />
+          {/* Sub category */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Sub-category</label>
+            <input
+              type="text"
+              value={subCategory}
+              onChange={(e) => setSubCategory(e.target.value)}
+              className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-          <input
-            type="text"
-            value={options.join(", ")}
-            onChange={(e) =>
-              setOptions(e.target.value.split(",").map(o => o.trim()))
-            }
-            placeholder="Options (comma separated)"
-            className="w-full rounded-lg border px-3 py-2"
-          />
+          {/* Options */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium">
+              Options <span className="text-xs text-gray-400">(comma separated)</span>
+            </label>
+            <input
+              type="text"
+              value={options.join(", ")}
+              onChange={(e) =>
+                setOptions(e.target.value.split(",").map(o => o.trim()))
+              }
+              className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
           {/* Image */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Image</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Image</label>
             <input type="file" accept="image/*" onChange={handleFileChange} />
 
             {imageUrl && !newFile && (
               <img
                 src={imageUrl}
                 alt="preview"
-                className="mt-2 h-28 w-28 rounded border object-contain"
+                className="h-28 w-28 rounded border object-contain"
               />
             )}
 
             {newFile && (
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="text-sm text-gray-500">
                 New file: {newFile.name}
               </p>
             )}
