@@ -48,7 +48,7 @@ export default function TablelistUI({ tables = [], onEdit, onDelete }) {
                 #{t.id}
               </td>
 
-              <td className="px-3 py-3 font-medium text-gray-800 break-words">
+              <td className="px-3 py-3 font-medium text-gray-800 wrap-break-words">
                 {t.name}
               </td>
 
