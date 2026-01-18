@@ -21,7 +21,7 @@ export default function OrderPreview({
 
   const handlesubmitOrder = async () => {
     try {
-      await addOrder({ tableId: 6, menuItems: items })
+      await addOrder({ tableId: 21, menuItems: items })
       onClearItem?.()
       setAlertText('Order submitted successfully')
       setTimeout(() => setAlertText(''), 2000)

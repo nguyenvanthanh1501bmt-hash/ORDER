@@ -6,6 +6,7 @@ import { getBillDetail } from "@/app/features/order/Get_Bill_Detail"
 import { useEffect, useState } from "react"
 import TableListUIForTableCheck from "@/app/features/order/TableListUIForTableCheck"
 import BillDetailModal from "@/app/features/order/Modal_Bill_Detail"
+import CustomAlert from "@/app/components/CustomAlert"
 
 export default function TableCheck() {
   const [tableList, setTableList] = useState([])
@@ -15,6 +16,8 @@ export default function TableCheck() {
   const [selectedBill, setSelectedBill] = useState(null)
   const [billDetail, setBillDetail] = useState(null)
   const [showModal, setShowModal] = useState(false)
+
+  const [alerttext, setalerttext] = useState(null)
 
   const fetchData = async () => {
     setLoading(true)
@@ -55,18 +58,24 @@ export default function TableCheck() {
         body: JSON.stringify({ bill_id: bill.id }),
       })
 
-      if (!res.ok) throw new Error("Payment failed")
-    
-      // Close modal
-      console.log("Bill id: ",bill.id)
+      const result = await res.json()
+
+      if (!res.ok) {
+        setalerttext(result.message || "Cannot close bill")
+        return
+      }
+
+      // SUCCESS
       setShowModal(false)
       setSelectedBill(null)
       setBillDetail(null)
 
-      // Reload data
+      setalerttext("closeBill successfully, now table are available")
+
       await fetchData()
     } catch (err) {
-      console.error("Error during payment:", err)
+      console.error("System error during payment:", err)
+      setalerttext("System error during payment")
     }
   }
 
@@ -104,6 +113,12 @@ export default function TableCheck() {
           onPayment={handlePayment}
         />
       )}
+
+      <CustomAlert
+        text={alerttext}
+        timeout={2000}
+        onclose={() => setalerttext(null)}
+      />
     </div>
   )
 }

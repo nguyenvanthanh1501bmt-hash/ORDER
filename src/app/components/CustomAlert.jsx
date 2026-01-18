@@ -1,4 +1,16 @@
-export default function CustomAlert({ text }) {
+import { useEffect } from "react"
+
+export default function CustomAlert({ text, timeout = 2000, onclose }) {
+  useEffect(() => {
+    if (!text || !onclose) return
+
+    const timer = setTimeout(() => {
+      onclose()
+    }, timeout)
+
+    return () => clearTimeout(timer)
+  }, [text, timeout, onclose])
+
   if (!text) return null
 
   return (

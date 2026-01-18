@@ -1,6 +1,7 @@
 'use client'
 
 import { Pencil, Trash2 } from 'lucide-react'
+import { QRCodeCanvas } from 'qrcode.react'
 import { formatDate } from '../helper'
 
 export default function TablelistUI({ tables = [], onEdit, onDelete }) {
@@ -23,7 +24,6 @@ export default function TablelistUI({ tables = [], onEdit, onDelete }) {
               Created at
             </th>
 
-            {/* ƯU TIÊN QR CODE */}
             <th className="px-3 py-3 text-left w-[34%]">
               QR code
             </th>
@@ -44,24 +44,37 @@ export default function TablelistUI({ tables = [], onEdit, onDelete }) {
                 transition
               "
             >
-              <td className="px-3 py-3 text-gray-500 wrap-break-words">
+              <td className="px-3 py-3 text-gray-500">
                 #{t.id}
               </td>
 
-              <td className="px-3 py-3 font-medium text-gray-800 wrap-break-words">
+              <td className="px-3 py-3 font-medium text-gray-800 break-words">
                 {t.name}
               </td>
 
-              <td className="px-3 py-3 text-gray-500 whitespace-normal">
+              <td className="px-3 py-3 text-gray-500">
                 {formatDate(t.created_at)}
               </td>
 
-              {/* QR code – KHÔNG BỊ BÓP */}
-              <td className="px-3 py-3 text-gray-700 break-all">
-                {t.qr_code_id || '—'}
+              {/* QR CODE HIỂN THỊ DẠNG HÌNH */}
+              <td className="px-3 py-3">
+                {t.qr_code_id ? (
+                  <div className="flex items-center gap-3">
+                    <QRCodeCanvas
+                      value={t.qr_code_id}
+                      size={64}
+                      level="M"
+                    />
+                    <span className="text-xs text-gray-500 break-all">
+                      {t.qr_code_id}
+                    </span>
+                  </div>
+                ) : (
+                  '—'
+                )}
               </td>
 
-              {/* Action – có thể xuống dòng */}
+              {/* ACTION */}
               <td className="px-3 py-3">
                 <div
                   className="

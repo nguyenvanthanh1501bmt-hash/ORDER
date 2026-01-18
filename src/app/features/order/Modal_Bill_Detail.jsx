@@ -22,7 +22,7 @@ export default function BillDetailModal({ bill, billDetail, onClose, onPayment }
               Bill Detail
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Table {bill.table_id}
+              Table {bill?.tables?.name}
             </p>
           </div>
 
