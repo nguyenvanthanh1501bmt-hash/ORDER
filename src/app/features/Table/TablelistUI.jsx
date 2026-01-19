@@ -56,7 +56,7 @@ export default function TablelistUI({ tables = [], onEdit, onDelete }) {
                 {formatDate(t.created_at)}
               </td>
 
-              {/* QR CODE HIỂN THỊ DẠNG HÌNH */}
+              {/* QR CODE RENDER BY IMAGE */}
               <td className="px-3 py-3">
                 {t.qr_code_id ? (
                   <div className="flex items-center gap-3">

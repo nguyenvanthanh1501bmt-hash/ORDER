@@ -19,6 +19,7 @@ export default function TableCheck() {
 
   const [alerttext, setalerttext] = useState(null)
 
+  // ==================== FETCH DATA (BILL, TABLE LIST) =====================
   const fetchData = async () => {
     setLoading(true)
 
@@ -28,7 +29,8 @@ export default function TableCheck() {
     ])
 
     if (tables) setTableList(tables)
-
+    
+    // Convert open bills array into a map key by table_id
     const billMap = {}
     bills?.forEach(bill => {
       billMap[bill.table_id] = bill
@@ -38,16 +40,21 @@ export default function TableCheck() {
     setLoading(false)
   }
 
+
+  // ============== MODAL CHECK DETAIL BILL ====================
   const onViewBill = async (bill) => {
     if (!bill) return
 
+    // fetch detail item of the bill
     const detail = await getBillDetail(bill.id)
 
+    // set this bill selected
     setSelectedBill(bill)
     setBillDetail(detail)
     setShowModal(true)
   }
 
+  // ==================== HANDLER =======================
   const handlePayment = async (bill) => {
     if (!bill?.id) return
 
@@ -65,7 +72,7 @@ export default function TableCheck() {
         return
       }
 
-      // SUCCESS
+      // suscess -> close bill modal + set selected bill and detail null  
       setShowModal(false)
       setSelectedBill(null)
       setBillDetail(null)
@@ -94,6 +101,8 @@ export default function TableCheck() {
           Loading tables...
         </p>
       ) : (
+
+        // RENDER TABLE ARE AVAILABLE OR OCCUPIED
         <TableListUIForTableCheck
           table={tableList}
           openBills={openBills}
@@ -101,6 +110,7 @@ export default function TableCheck() {
         />
       )}
 
+      {/* DETAIL BILL MODAL SHOW */}
       {showModal && (
         <BillDetailModal
           bill={selectedBill}

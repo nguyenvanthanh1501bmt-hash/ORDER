@@ -19,7 +19,7 @@ export default function FoodlistUIatMainMenu({ foodItems = [], onFoodSelect }) {
 
   return (
     <>
-      {/* GRID: 2 món / dòng trên mobile */}
+      {/* GRID: 2 items per line on mobile */}
       <div
         className="
           grid
@@ -124,7 +124,7 @@ export default function FoodlistUIatMainMenu({ foodItems = [], onFoodSelect }) {
         ))}
       </div>
 
-      {/* Modal chọn size */}
+      {/* Modal size select */}
       {activeItem && activeItem.options && (
         <ChosingSizeForm
           item={activeItem}

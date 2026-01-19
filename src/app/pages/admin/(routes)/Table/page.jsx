@@ -22,6 +22,7 @@ export default function Tablepage() {
   const [searchName, setSearchName] = useState("")
   const [searchCreate, setSearchCreate] = useState("")
 
+  // ================= FETCH TABLE =====================
   const fetchTableList = async () => {
     const data = await getTableList()
     setTableList(data || [])
@@ -29,26 +30,27 @@ export default function Tablepage() {
 
   useEffect(() => {
     fetchTableList()
-  }, [])
+  }, []) 
 
-const filteredTableList = tableList.filter((table) => {
-  // Filter theo name
-  if (searchName && !table.name.toLowerCase().includes(searchName.toLowerCase())) {
-    return false;
-  }
+  // ================ FILTER LOGIC =====================
+  const filteredTableList = tableList.filter((table) => {
+    // Filter by name
+    if (searchName && !table.name.toLowerCase().includes(searchName.toLowerCase())) {
+      return false;
+    }
 
-  // Filter theo ngày tạo
-  if (searchCreate && table.created_at) {
-    // Chỉ cắt lấy 10 ký tự đầu của created_at: "YYYY-MM-DD"
-    // Nếu API trả về "2025-12-24 09:29:11.106575+00" thì
-    // table.created_at.slice(0,10) => "2025-12-24"
-    const tableDateStr = table.created_at.slice(0, 10);
+    // Filter by date created
+    if (searchCreate && table.created_at) {
+      // Extract only the first 10 characters of created_at: "YYYY-MM-DD"
+      // If the API returns "2025-12-24 09:29:11.106575+00", then
+      // table.created_at.slice(0, 10) => "2025-12-24"
+      const tableDateStr = table.created_at.slice(0, 10);
 
-    if (tableDateStr !== searchCreate) return false;
-  }
+      if (tableDateStr !== searchCreate) return false;
+    }
 
-  return true;
-});
+    return true;
+  });
 
 
 
@@ -102,6 +104,7 @@ const filteredTableList = tableList.filter((table) => {
         }}
       />
 
+      {/* MODAL */}
       <AddTableModal
         open={isModalOpen}
         onOpenChange={(state) => {

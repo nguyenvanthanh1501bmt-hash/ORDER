@@ -29,15 +29,11 @@ export default function Home() {
   const [tableList, setTableList] = useState([])
   const [tableId, setTableId] = useState(null)
 
-  /* =======================
-     READ QR FROM URL
-     ======================= */
+  {/* ======================= READ QR FROM URL ======================= */}
   const searchParams = useSearchParams()
   const tableQRCode = searchParams.get('table')
 
-  /* =======================
-     FETCH TABLE LIST (ONCE)
-     ======================= */
+  {/* ======================= FETCH TABLE LIST (ONCE) ======================= */}
   useEffect(() => {
     const fetchTableList = async () => {
       const res = await getTableList()
@@ -48,15 +44,14 @@ export default function Home() {
     fetchTableList()
   }, [])
 
-  /* =======================
-     MAP QR -> TABLE ID
-     ======================= */
+  {/* ======================= MAP QR -> TABLE ID ======================= */}
   useEffect(() => {
     if (!tableQRCode || tableList.length === 0) {
       console.log('QR CODE:', tableQRCode)
       return
     }
 
+    // mapping qrcode param into tableId
     const matchedTable = tableList.find(table => {
       try {
         const url = new URL(table.qr_code_id)
@@ -72,9 +67,7 @@ export default function Home() {
     setTableId(matchedTable?.id ?? null)
   }, [tableQRCode, tableList])
 
-  /* =======================
-     FETCH FOOD
-     ======================= */
+  {/* ======================= FETCH FOOD ======================= */}
   useEffect(() => {
     const fetchFoodList = async () => {
       const data = await getFoodList()
@@ -84,20 +77,20 @@ export default function Home() {
     fetchFoodList()
   }, [])
 
-  /* =======================
-     ORDER HANDLERS
-     ======================= */
+  {/* ======================= ORDER HANDLERS ======================= */}
   const showAlert = (text) => {
     setAlertText(text)
     setTimeout(() => setAlertText(''), 1800)
   }
 
+  // ============ CLEAR ORDER PREVIEW UI WHEN ORDER SENT ==============
   const clearOrder = () => {
     setSelectedItems([])
     setShowOrderPreview(false)
     showAlert('Your order has been sent')
   }
 
+  // ================= HANDLERS ========================
   const handleSelectItem = (food) => {
     setSelectedItems(prev => {
       const existedItem = prev.find(
@@ -160,9 +153,6 @@ export default function Home() {
     showAlert('Đã xoá món khỏi đơn')
   }
 
-  /* =======================
-     RENDER
-     ======================= */
   return (
     <div className="h-screen overflow-hidden bg-zinc-50">
 
@@ -170,6 +160,7 @@ export default function Home() {
 
       <div className="flex h-full flex-col lg:flex-row gap-4 lg:gap-8 p-4 lg:p-6">
 
+        {/* ==== CONTENT === */}
         <div className="w-full lg:w-2/3 h-full overflow-y-auto pb-24 lg:pb-0">
           <FoodlistUIatMainMenu
             foodItems={foodList}
@@ -199,6 +190,7 @@ export default function Home() {
         </button>
       )}
 
+      {/* =================== RESPONSIVE VIEW (FOCUS ON MOBILE) ====================*/}
       {showOrderPreview && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div

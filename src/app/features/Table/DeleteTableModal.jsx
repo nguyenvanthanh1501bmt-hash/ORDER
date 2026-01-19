@@ -8,6 +8,7 @@ export default function ConfirmDeleteTableModal({ open, onOpenChange, table, onD
 
   if (!open || !table) return null
 
+  // ============ HANDLER ===============
   const handleDelete = async () => {
     try {
       setLoading(true)

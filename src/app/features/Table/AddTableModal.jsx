@@ -13,6 +13,7 @@ export default function AddTableModal({ open, onOpenChange }) {
     setError("")
   }
 
+  // ========== HANDLER ===============
   const handleSubmit = async (e) => {
     e.preventDefault()
 

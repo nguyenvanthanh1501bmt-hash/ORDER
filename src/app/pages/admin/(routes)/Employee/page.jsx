@@ -23,6 +23,7 @@ export default function EmployeePage() {
     //filter state
     const [searchName, setSearchName] = useState("");
 
+    // ============= FETCH EMPLOYEE LIST =============
     const fetchEmployeeList = async () => {
         const data = await getEmployeeList();
         setEmployees(data || []);
@@ -32,6 +33,7 @@ export default function EmployeePage() {
         fetchEmployeeList();
     }, []);
 
+    // ============= FILTER LOGIC ===================
     const filteredEmployeeList = employees.filter((emp) => {
         if (searchName.toLocaleLowerCase() && !emp.name.toLocaleLowerCase().includes(searchName.toLocaleLowerCase()))
             return false;
@@ -62,7 +64,7 @@ export default function EmployeePage() {
 
             </div>
 
-            {/* Filter Bar */}
+            {/* FILTER BAR */}
             <Filterlist
                 className="flex items-center gap-4 mb-4 w-fit"
                 showSearchName={true}
@@ -70,7 +72,7 @@ export default function EmployeePage() {
                 setSearchName={setSearchName}
             />
 
-            {/* Employee Table */}
+            {/* EMPLOYEE UI */}
             <EmployeelistUI
                 employees={filteredEmployeeList}
                 onEdit={(emp) => { setSelectedEmployee(emp); setIsUpdateModalOpen(true); }}
@@ -78,7 +80,7 @@ export default function EmployeePage() {
                 onResetPassword={(emp) => { setSelectedEmployee(emp); setIsResetPassModalOpen(true); }}
             />
 
-            {/* Add Modal */}
+            {/* ADD MODAL */}
             <AddEmployeeModal
                 open={isAddModalOpen}
                 onOpenChange={(state) => {
@@ -87,7 +89,7 @@ export default function EmployeePage() {
                 }}
             />
 
-            {/* Update Modal */}
+            {/* UPDATE MODAL */}
             {selectedEmployee && (
                 <UpdateEmployeeModal
                     open={isUpdateModalOpen}
@@ -99,7 +101,7 @@ export default function EmployeePage() {
                 />
             )}
 
-            {/* Delete Modal */}
+            {/* DELETE MODAL */}
             {selectedEmployee && (
                 <DeleteEmployeeModal
                     open={isDeleteModalOpen}
@@ -111,7 +113,7 @@ export default function EmployeePage() {
                 />
             )}
 
-            {/* Reset Password Modal */}
+            {/* RESET PASSWORD MODAL */}
             {selectedEmployee && (
                 <ResetPasswordModal
                     open={isResetPassModalOpen}

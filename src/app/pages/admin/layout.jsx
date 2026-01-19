@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }) {
           onClose={() => setOpenNav(false)}
         />
 
-        {/* Main content – PUSH khi mở nav */}
+        {/* Main content – PUSH when open nav */}
         <main
           className={`
             flex-1

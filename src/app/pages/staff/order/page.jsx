@@ -10,6 +10,7 @@ export default function TableCheck(){
   const [loading, setLoading] = useState(true)
   const [expandedOrders, setExpandedOrders] = useState(new Set())
 
+  // ====================== FETCH ORDERS WITH STATUS = PENDING APPROVAL && ACCEPTED ====================
   useEffect(() => {
     async function fetchOrders() {
       try {
@@ -24,6 +25,8 @@ export default function TableCheck(){
     fetchOrders()
   }, [])
 
+
+  // ================= EXPAND OR COLAP ORDERS =============================
   const toggleOrder = (orderId) => {
     setExpandedOrders(prev => {
       const next = new Set(prev)
@@ -32,6 +35,8 @@ export default function TableCheck(){
     })
   }
 
+
+  // ==================== HANDLERS ==========================
   const handleApprove = async (orderId) => {
     try {
       const res = await fetch('/api/orders/update-status-order', {
@@ -49,7 +54,7 @@ export default function TableCheck(){
         throw new Error('Approve failed')
       }
 
-      // CHỈ update status ở FE
+      // update status from pending staff approval -> accepted
       setOrders(prev =>
         prev.map(order =>
           order.id === orderId
@@ -58,7 +63,7 @@ export default function TableCheck(){
         )
       )
 
-      // đóng dropdown nếu đang mở
+      // close dropdown
       setExpandedOrders(prev => {
         const next = new Set(prev)
         next.delete(orderId)
@@ -85,12 +90,12 @@ export default function TableCheck(){
         throw new Error('Reject failed')
       }
 
-      // remove order khỏi UI
+      // remove order 
       setOrders(prev =>
         prev.filter(order => order.id !== orderId)
       )
 
-      // đóng dropdown nếu đang mở
+      // close dropdown
       setExpandedOrders(prev => {
         const next = new Set(prev)
         next.delete(orderId)
@@ -119,12 +124,12 @@ export default function TableCheck(){
         throw new Error('Complete failed')
       }
 
-      // remove khỏi list sau khi complete
+      // unrendered after done 
       setOrders(prev =>
         prev.filter(order => order.id !== orderId)
       )
 
-      // đóng dropdown nếu đang mở
+      // close dropdown
       setExpandedOrders(prev => {
         const next = new Set(prev)
         next.delete(orderId)
@@ -140,6 +145,7 @@ export default function TableCheck(){
   if (loading) return <p>Loading...</p>
 
   return (
+    // RENDER UI
     <OrderAvailableUI
       orders={orders}
       expandedOrders={expandedOrders}

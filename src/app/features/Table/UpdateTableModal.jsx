@@ -7,6 +7,7 @@ export default function UpdateTableModal({ open, onOpenChange, table }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // ============= LOAD CURRENT DATA ONTO FORM =====================
   useEffect(() => {
     if (table) {
       setName(table.name || "");
@@ -18,6 +19,7 @@ export default function UpdateTableModal({ open, onOpenChange, table }) {
     if (!open) return;
   }, [open, onOpenChange]);
 
+  // ============ HANDLER ============
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -60,7 +62,7 @@ export default function UpdateTableModal({ open, onOpenChange, table }) {
         className="bg-white w-full max-w-sm rounded-xl shadow-lg p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* HEADER */}
         <div className="mb-5">
           <h1 className="text-lg font-semibold">Update Table</h1>
           <p className="text-sm text-gray-500">

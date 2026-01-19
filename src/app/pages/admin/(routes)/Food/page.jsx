@@ -18,10 +18,11 @@ export default function Foodpage() {
   const [isUpdateOpen, setIsUpdateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
-  /* ================= FILTER STATE ================= */
+  // ================= FILTER STATE ================= 
   const [searchName, setSearchName] = useState("")
   const [searchPrice, setSearchPrice] = useState("")
 
+  // ============== FETCH FOOD ==============
   const fetchFoodList = async () => {
     const data = await getFoodList()
     setFoodList(data || [])
@@ -31,7 +32,7 @@ export default function Foodpage() {
     fetchFoodList()
   }, [])
 
-  /* ================= FILTER LOGIC ================= */
+  // ================= FILTER LOGIC ================= 
   const filteredFoodList = foodList.filter(food => {
     if (
       searchName &&
@@ -70,6 +71,7 @@ export default function Foodpage() {
 
       </div>
 
+      {/* FILTERED FOOD */}
       <Filterlist
         className="flex items-center gap-4 mb-4 w-fit"
         showSearchName={true}

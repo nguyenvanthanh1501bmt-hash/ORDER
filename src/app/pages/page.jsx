@@ -7,7 +7,9 @@ import useAuth from '@/hooks/useAuth';
 import Auth from '@/components/auth/Auth';
 
 export default function CheckUser() {
-  const { user, loading } = useAuth(); // hook check session
+  // ==================== CHECK HOOK SESSION =====================
+  const { user, loading } = useAuth(); 
+
   const router = useRouter();
   const [checkingRole, setCheckingRole] = useState(true);
 
@@ -15,13 +17,13 @@ export default function CheckUser() {
     const checkAccess = async () => {
       if (!loading) {
         if (!user) {
-          // Chưa login → hiển thị Auth
+          // not login setcheck fail
           setCheckingRole(false);
           return;
         }
 
         try {
-          // Lấy role từ bảng staff 
+          // getting role from staff
           const { data: staffData, error: staffError } = await client
             .from('staff')
             .select('role')
@@ -35,10 +37,10 @@ export default function CheckUser() {
 
           const role = staffData.role;
 
-          // Redirect theo role
+          // redirect by role
           if (role === 'admin') router.push('/pages/admin');
           else if (role === 'staff') router.push('/pages/staff');
-          else setCheckingRole(false); // role khác → vẫn hiển thị Auth
+          else setCheckingRole(false); // orther role are invalid
 
         } catch (err) {
           console.error(err);
@@ -52,6 +54,6 @@ export default function CheckUser() {
 
   if (loading || checkingRole) return <h1>Loading...</h1>;
 
-  // Nếu chưa login hoặc role không hợp lệ → hiển thị login/signup
+  // not login or role invalid -> redirect to signin form or page by role
   return <Auth />;
 }
