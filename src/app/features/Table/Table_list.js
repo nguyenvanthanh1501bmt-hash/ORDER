@@ -8,8 +8,9 @@ export async function getTableList() {
       throw new Error("Failed to fetch table list");
     }
 
-    const data = await res.json();
-    return data;
+    const response = await res.json();
+    // Handle new response format: { success, data, message }
+    return response.data || [];
 
   } catch (error) {
     console.error("Error fetching table list:", error);

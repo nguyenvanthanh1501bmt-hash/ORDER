@@ -1,20 +1,18 @@
-import { supabaseAdmin } from '@/api/adminClient';
-import { NextResponse } from 'next/server';
+import { updateOrderStatusController } from "@/controllers/orderController";
 
 export async function PATCH(req) {
-  const { orderId, status } = await req.json();
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
 
-  try {
-    const { data: updatedOrder } = await supabaseAdmin
-      .from('orders')
-      .update({ status })
-      .eq('id', orderId)
-      .select('*')
-      .single();
-
-    return NextResponse.json(updatedOrder);
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  if (!id) {
+    return new Response(
+      JSON.stringify({ success: false, message: "Order ID is required" }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
+
+  return updateOrderStatusController(req, id);
 }

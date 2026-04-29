@@ -22,5 +22,7 @@ export async function addOrder({ tableId, menuItems }) {
     throw new Error('Failed to add order')
   }
 
-  return res.json()
+  const response = await res.json()
+  // Handle new response format: { success, data, message }
+  return response.data || response
 }

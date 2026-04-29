@@ -39,13 +39,12 @@ export default function TableCheck(){
   // ==================== HANDLERS ==========================
   const handleApprove = async (orderId) => {
     try {
-      const res = await fetch('/api/orders/update-status-order', {
+      const res = await fetch(`/api/orders/update-status-order?id=${orderId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          orderId,
           status: 'accepted',
         }),
       })
@@ -78,12 +77,11 @@ export default function TableCheck(){
 
   const handleReject = async (orderId) => {
     try {
-      const res = await fetch('/api/orders/delete-order', {
+      const res = await fetch(`/api/orders/delete-order?id=${orderId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ orderId }),
       })
 
       if (!res.ok) {
@@ -110,13 +108,12 @@ export default function TableCheck(){
   const handleDone = async (orderId) => {
     try {
       const res = await fetch('/api/orders/update-status-order', {
+        method: 'PATCH',`/api/orders/update-status-order?id=${orderId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          orderId,
-          status: 'served',
+        body: JSON.stringify({'served',
         }),
       })
 

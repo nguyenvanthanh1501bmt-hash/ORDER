@@ -1,18 +1,15 @@
-import { supabaseAdmin } from "@/api/adminClient";
+import { resetPasswordController } from "@/controllers/staffController";
 
 export async function POST(req) {
-  try {
-    const { email } = await req.json();
-    if (!email) return new Response(JSON.stringify({ message: "Email is required" }), { status: 400 });
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
 
-    const { data, error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
-      redirectTo: "http://localhost:3000/pages/reset-password" // tuyệt đối
+  if (!id) {
+    return new Response(JSON.stringify({ success: false, message: "Staff ID is required" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
     });
-
-    if (error) throw error;
-
-    return new Response(JSON.stringify({ message: "Reset email sent" }), { status: 200 });
-  } catch (err) {
-    return new Response(JSON.stringify({ message: err.message }), { status: 400 });
   }
+
+  return resetPasswordController(req, id);
 }

@@ -1,33 +1,15 @@
-import { supabaseAdmin } from "@/api/adminClient";
+import { updateTableQRCodeController } from "@/controllers/tableController";
 
 export async function PATCH(req) {
-  try {
-    const { tableId, tableQRCode } = await req.json();
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
 
-    if (!tableId) {
-      return new Response(
-        JSON.stringify({ message: "tableId missing or invalid" }),
-        { status: 400 }
-      );
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from('tables')
-      .update({ qr_code_id: tableQRCode })
-      .eq('id', tableId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return new Response(
-      JSON.stringify({ message: "Update table successfully", data }),
-      { status: 200 }
-    );
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ message: err.message || "Server error" }),
-      { status: 500 }
-    );
+  if (!id) {
+    return new Response(JSON.stringify({ success: false, message: "Table ID is required" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
+
+  return updateTableQRCodeController(req, id);
 }

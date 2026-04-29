@@ -8,8 +8,9 @@ export  async function getOrdersAvailable() {
             throw new Error('Failed to load orders')
         }
 
-        const data = await res.json()
-        return data || []
+        const response = await res.json()
+        // Handle new response format: { success, data, message }
+        return response.data || []
     }
     catch(err){
         throw err;

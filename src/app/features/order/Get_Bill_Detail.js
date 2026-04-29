@@ -14,5 +14,7 @@ export async function getBillDetail(billId) {
     return null
   }
 
-  return res.json()
+  const response = await res.json()
+  // Handle new response format: { success, data, message }
+  return response.data || response
 }

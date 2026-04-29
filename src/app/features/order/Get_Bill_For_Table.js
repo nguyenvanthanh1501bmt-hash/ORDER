@@ -6,5 +6,7 @@ export async function getOpenBills() {
     return []
   }
 
-  return res.json()
+  const response = await res.json()
+  // Handle new response format: { success, data, message }
+  return response.data || []
 }
