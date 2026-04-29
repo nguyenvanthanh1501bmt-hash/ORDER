@@ -11,43 +11,59 @@ export default function UpdateEmployeeModal({ open, onOpenChange, Employee }) {
 
   useEffect(() => {
     if (Employee) {
-      setEmail(Employee.email)
-      setName(Employee.name)
-      setRole(Employee.role)
-      setUserId(Employee.user_id)
+      setEmail(Employee.email || "")
+      setName(Employee.name || "")
+      setRole(Employee.role || "")
+      setUserId(Employee.user_id || "")
+      setErr("")
     }
   }, [Employee])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    if (!Employee?.id) {
+      setErr("Staff ID is missing")
+      return
+    }
+
     setLoading(true)
     setErr("")
 
     try {
-      const res = await fetch('/api/admin/update-staff', {
+      const res = await fetch(`/api/admin/update-staff?id=${Employee.id}`, {
         method: "PUT",
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, role, email, user_id: userId }),
+        body: JSON.stringify({
+          name,
+          role,
+          email,
+          user_id: userId,
+        }),
       })
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message || "Update failed")
+      const data = await res.json().catch(() => ({
+        message: "Invalid server response",
+      }))
+
+      if (!res.ok) {
+        throw new Error(data.message || "Update failed")
+      }
 
       onOpenChange(false)
     } catch (error) {
-      setErr(error.message)
+      setErr(error.message || "Server error")
     } finally {
       setLoading(false)
     }
   }
 
-  if (!open) return null
+  if (!open || !Employee) return null
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
       <div className="bg-white w-[420px] rounded-xl shadow-lg">
         
-        {/* Header */}
         <div className="px-6 py-4 border-b">
           <h2 className="text-lg font-semibold text-gray-800">
             Update Staff Information
@@ -57,10 +73,8 @@ export default function UpdateEmployeeModal({ open, onOpenChange, Employee }) {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Email
@@ -75,7 +89,6 @@ export default function UpdateEmployeeModal({ open, onOpenChange, Employee }) {
             />
           </div>
 
-          {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Full name
@@ -90,7 +103,6 @@ export default function UpdateEmployeeModal({ open, onOpenChange, Employee }) {
             />
           </div>
 
-          {/* Role */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Role
@@ -108,14 +120,12 @@ export default function UpdateEmployeeModal({ open, onOpenChange, Employee }) {
             </select>
           </div>
 
-          {/* Error */}
           {err && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
               {err}
             </p>
           )}
 
-          {/* Actions */}
           <div className="flex justify-end gap-3 pt-3 border-t">
             <button
               type="button"
@@ -128,7 +138,7 @@ export default function UpdateEmployeeModal({ open, onOpenChange, Employee }) {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !name.trim()}
               className={`px-4 py-2 text-sm rounded-lg font-semibold text-white transition
                 ${loading
                   ? "bg-blue-400 cursor-not-allowed"

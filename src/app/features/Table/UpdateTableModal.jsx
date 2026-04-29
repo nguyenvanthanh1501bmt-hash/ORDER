@@ -1,57 +1,57 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
 
 export default function UpdateTableModal({ open, onOpenChange, table }) {
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [name, setName] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  // ============= LOAD CURRENT DATA ONTO FORM =====================
   useEffect(() => {
     if (table) {
-      setName(table.name || "");
-      setError("");
+      setName(table.name || "")
+      setError("")
     }
-  }, [table]);
+  }, [table])
 
-  useEffect(() => {
-    if (!open) return;
-  }, [open, onOpenChange]);
-
-  // ============ HANDLER ============
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
+
+    if (!table?.id) {
+      setError("Table ID is missing")
+      return
+    }
 
     try {
-      setLoading(true);
-      setError("");
+      setLoading(true)
+      setError("")
 
-      const res = await fetch("/api/table/update-table", {
+      const res = await fetch(`/api/table/update-table?id=${table.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tableId: table.id,
-          tableName: name,
+          name,
         }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({
+        message: "Invalid server response",
+      }))
 
       if (!res.ok) {
-        setError(data.message || "Failed to update table");
-        return;
+        setError(data.message || "Failed to update table")
+        return
       }
 
-      onOpenChange(false);
+      onOpenChange(false)
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Server error")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  if (!open || !table) return null;
+  if (!open || !table) return null
 
   return (
     <div
@@ -62,7 +62,6 @@ export default function UpdateTableModal({ open, onOpenChange, table }) {
         className="bg-white w-full max-w-sm rounded-xl shadow-lg p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* HEADER */}
         <div className="mb-5">
           <h1 className="text-lg font-semibold">Update Table</h1>
           <p className="text-sm text-gray-500">
@@ -101,7 +100,7 @@ export default function UpdateTableModal({ open, onOpenChange, table }) {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !name.trim()}
               className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {loading ? "Saving..." : "Save"}
@@ -110,5 +109,5 @@ export default function UpdateTableModal({ open, onOpenChange, table }) {
         </form>
       </div>
     </div>
-  );
+  )
 }

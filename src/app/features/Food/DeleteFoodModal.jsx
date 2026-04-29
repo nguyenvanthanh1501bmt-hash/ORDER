@@ -7,31 +7,36 @@ export default function DeleteFoodModal({ open, onOpenChange, food }) {
   const [err, setErr] = useState(null)
 
   const handleDelete = async () => {
+    if (!food?.id) {
+      setErr("Missing food ID")
+      return
+    }
+
     setLoading(true)
     setErr(null)
 
     try {
-      const res = await fetch('/api/menu_items/delete-menu_items', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          menuItemId: food.id,
-          imageurl: food.image_url,
-        }),
+      const res = await fetch(`/api/menu_items/delete-menu_items?id=${food.id}`, {
+        method: "DELETE",
       })
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message || 'Delete failed')
+      const data = await res.json().catch(() => ({
+        message: "Invalid server response",
+      }))
+
+      if (!res.ok) {
+        throw new Error(data.message || "Delete failed")
+      }
 
       onOpenChange(false)
     } catch (error) {
-      setErr(error.message)
+      setErr(error.message || "Server error")
     } finally {
       setLoading(false)
     }
   }
 
-  if (!open) return null
+  if (!open || !food) return null
 
   return (
     <div
@@ -42,7 +47,6 @@ export default function DeleteFoodModal({ open, onOpenChange, food }) {
         className="w-full max-w-md rounded-xl bg-white shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="border-b px-6 py-4">
           <h2 className="text-lg font-semibold text-red-600">
             Delete food item
@@ -52,11 +56,10 @@ export default function DeleteFoodModal({ open, onOpenChange, food }) {
           </p>
         </div>
 
-        {/* Body */}
         <div className="px-6 py-5 space-y-4">
           <p className="text-sm text-gray-700">
             Bạn có chắc chắn muốn xóa món
-            <span className="font-semibold"> {food?.name}</span> không?
+            <span className="font-semibold"> {food.name}</span> không?
           </p>
 
           {err && (
@@ -65,7 +68,6 @@ export default function DeleteFoodModal({ open, onOpenChange, food }) {
             </p>
           )}
 
-          {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"

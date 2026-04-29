@@ -1,40 +1,42 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 export default function DeleteEmployeeModal({ open, onOpenChange, employee }) {
-  const [user_id, setUserId] = useState("")
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState(null)
 
-  useEffect(() => {
-    if (employee) setUserId(employee.user_id)
-  }, [employee])
+  const handleDelete = async () => {
+    if (!employee?.id) {
+      setErr("Staff ID is missing")
+      return
+    }
 
-  const handleDelete = async (e) => {
-    e.preventDefault()
     setLoading(true)
     setErr(null)
 
     try {
-      const res = await fetch('/api/admin/delete-staff', {
+      const res = await fetch(`/api/admin/delete-staff?id=${employee.id}`, {
         method: "DELETE",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id }),
       })
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message || "Lỗi xóa nhân viên")
+      const data = await res.json().catch(() => ({
+        message: "Invalid server response",
+      }))
+
+      if (!res.ok) {
+        throw new Error(data.message || "Lỗi xóa nhân viên")
+      }
 
       onOpenChange(false)
     } catch (error) {
-      setErr(error.message)
+      setErr(error.message || "Server error")
     } finally {
       setLoading(false)
     }
   }
 
-  if (!open) return null
+  if (!open || !employee) return null
 
   return (
     <div
@@ -45,7 +47,6 @@ export default function DeleteEmployeeModal({ open, onOpenChange, employee }) {
         className="w-full max-w-md rounded-xl bg-white shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="border-b px-6 py-4">
           <h2 className="text-lg font-semibold text-red-600">
             Delete staff
@@ -55,11 +56,10 @@ export default function DeleteEmployeeModal({ open, onOpenChange, employee }) {
           </p>
         </div>
 
-        {/* Body */}
         <div className="px-6 py-5 space-y-4">
           <p className="text-sm text-gray-700">
             Bạn có chắc chắn muốn xóa nhân viên
-            <span className="font-semibold"> {employee?.name}</span> không?
+            <span className="font-semibold"> {employee.name}</span> không?
           </p>
 
           {err && (
@@ -68,7 +68,6 @@ export default function DeleteEmployeeModal({ open, onOpenChange, employee }) {
             </p>
           )}
 
-          {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"

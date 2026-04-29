@@ -10,10 +10,6 @@ import FoodlistUIatMainMenu from './features/MainMenu/MenuSection'
 import OrderPreview from './features/MainMenu/OrderPreview'
 import CustomAlert from './components/CustomAlert'
 
-/**
- * Generate pseudo-random ID (no crypto)
- * Format: xxxx-xxxx-xxxx
- */
 function generateId() {
   return 'xxxx-xxxx-xxxx'.replace(/x/g, () =>
     Math.floor(Math.random() * 16).toString(16)
@@ -29,11 +25,9 @@ export default function Home() {
   const [tableList, setTableList] = useState([])
   const [tableId, setTableId] = useState(null)
 
-  {/* ======================= READ QR FROM URL ======================= */}
   const searchParams = useSearchParams()
   const tableQRCode = searchParams.get('table')
 
-  {/* ======================= FETCH TABLE LIST (ONCE) ======================= */}
   useEffect(() => {
     const fetchTableList = async () => {
       const res = await getTableList()
@@ -44,15 +38,16 @@ export default function Home() {
     fetchTableList()
   }, [])
 
-  {/* ======================= MAP QR -> TABLE ID ======================= */}
   useEffect(() => {
     if (!tableQRCode || tableList.length === 0) {
       console.log('QR CODE:', tableQRCode)
       return
     }
 
-    // mapping qrcode param into tableId
     const matchedTable = tableList.find(table => {
+      if (String(table.id) === String(tableQRCode)) return true
+      if (String(table.qr_code_id) === String(tableQRCode)) return true
+
       try {
         const url = new URL(table.qr_code_id)
         return url.searchParams.get('table') === tableQRCode
@@ -61,13 +56,13 @@ export default function Home() {
       }
     })
 
+    console.log('QR:', tableQRCode)
     console.log('MATCHED TABLE:', matchedTable)
     console.log('TABLE ID:', matchedTable?.id ?? null)
 
     setTableId(matchedTable?.id ?? null)
   }, [tableQRCode, tableList])
 
-  {/* ======================= FETCH FOOD ======================= */}
   useEffect(() => {
     const fetchFoodList = async () => {
       const data = await getFoodList()
@@ -77,21 +72,23 @@ export default function Home() {
     fetchFoodList()
   }, [])
 
-  {/* ======================= ORDER HANDLERS ======================= */}
   const showAlert = (text) => {
     setAlertText(text)
     setTimeout(() => setAlertText(''), 1800)
   }
 
-  // ============ CLEAR ORDER PREVIEW UI WHEN ORDER SENT ==============
   const clearOrder = () => {
     setSelectedItems([])
     setShowOrderPreview(false)
     showAlert('Your order has been sent')
   }
 
-  // ================= HANDLERS ========================
   const handleSelectItem = (food) => {
+    if (!tableId) {
+      showAlert('Không tìm thấy bàn. Vui lòng quét lại QR.')
+      return
+    }
+
     setSelectedItems(prev => {
       const existedItem = prev.find(
         item =>
@@ -155,12 +152,9 @@ export default function Home() {
 
   return (
     <div className="h-screen overflow-hidden bg-zinc-50">
-
       <CustomAlert text={alertText} />
 
       <div className="flex h-full flex-col lg:flex-row gap-4 lg:gap-8 p-4 lg:p-6">
-
-        {/* ==== CONTENT === */}
         <div className="w-full lg:w-2/3 h-full overflow-y-auto pb-24 lg:pb-0">
           <FoodlistUIatMainMenu
             foodItems={foodList}
@@ -178,7 +172,6 @@ export default function Home() {
             onClearItem={clearOrder}
           />
         </div>
-
       </div>
 
       {selectedItems.length > 0 && (
@@ -190,7 +183,6 @@ export default function Home() {
         </button>
       )}
 
-      {/* =================== RESPONSIVE VIEW (FOCUS ON MOBILE) ====================*/}
       {showOrderPreview && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div

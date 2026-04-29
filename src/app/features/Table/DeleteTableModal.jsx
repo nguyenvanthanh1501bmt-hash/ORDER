@@ -2,30 +2,29 @@
 
 import { useState } from "react"
 
-export default function ConfirmDeleteTableModal({ open, onOpenChange, table, onDeleted }) {
+export default function ConfirmDeleteTableModal({
+  open,
+  onOpenChange,
+  table,
+  onDeleted,
+}) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
   if (!open || !table) return null
 
-  // ============ HANDLER ===============
   const handleDelete = async () => {
     try {
       setLoading(true)
       setError("")
 
-      const res = await fetch("/api/table/delete-table", {
+      const res = await fetch(`/api/table/delete-table?id=${table.id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tableId: table.id }),
       })
 
-      let data
-      try {
-        data = await res.json()
-      } catch {
-        data = { message: "Invalid server response" }
-      }
+      const data = await res.json().catch(() => ({
+        message: "Invalid server response",
+      }))
 
       if (!res.ok) {
         setError(data.message || "Failed to delete table")
@@ -50,7 +49,6 @@ export default function ConfirmDeleteTableModal({ open, onOpenChange, table, onD
         className="w-full max-w-md rounded-xl bg-white shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="border-b px-6 py-4">
           <h2 className="text-lg font-semibold text-red-600">
             Delete table
@@ -60,7 +58,6 @@ export default function ConfirmDeleteTableModal({ open, onOpenChange, table, onD
           </p>
         </div>
 
-        {/* Body */}
         <div className="px-6 py-5 space-y-4">
           <p className="text-sm text-gray-700">
             Are you sure you want to delete
@@ -73,7 +70,6 @@ export default function ConfirmDeleteTableModal({ open, onOpenChange, table, onD
             </p>
           )}
 
-          {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"

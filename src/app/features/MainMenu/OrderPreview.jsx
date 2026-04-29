@@ -20,21 +20,43 @@ export default function OrderPreview({
     0
   )
 
+  const showAlert = (text) => {
+    setAlertText(text)
+    setTimeout(() => setAlertText(''), 2000)
+  }
+
   const handlesubmitOrder = async () => {
+    if (!tableId) {
+      showAlert('Không tìm thấy bàn. Vui lòng quét lại QR.')
+      return
+    }
+
+    if (items.length === 0) {
+      showAlert('Chưa có món nào')
+      return
+    }
+
     try {
-      await addOrder({ tableId: tableId, menuItems: items })
+      console.log('SUBMIT ORDER:', {
+        tableId,
+        items,
+      })
+
+      await addOrder({
+        tableId,
+        menuItems: items,
+      })
+
       onClearItem?.()
-      setAlertText('Order submitted successfully')
-      setTimeout(() => setAlertText(''), 2000)
+      showAlert('Order submitted successfully')
     } catch (error) {
       console.error('Failed to submit order:', error)
-      setAlertText('Failed to submit order')
+      showAlert('Failed to submit order')
     }
   }
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-lg border">
-
       {/* Header */}
       <div className="px-6 py-4 border-b">
         <h2 className="text-xl font-bold text-gray-800">
@@ -61,6 +83,7 @@ export default function OrderPreview({
                   <p className="font-semibold text-gray-800">
                     {index + 1}. {item.name}
                   </p>
+
                   <button
                     onClick={() => onDeleteItem?.(item.orderItemId)}
                     className="text-gray-400 hover:text-red-500"
@@ -126,7 +149,7 @@ export default function OrderPreview({
         )}
       </div>
 
-      {/* Footer — DÍNH SÁT ĐÁY */}
+      {/* Footer */}
       <div className="border-t bg-white px-6 py-4 sticky bottom-0">
         <div className="flex justify-between items-center mb-4">
           <span className="text-lg font-semibold text-gray-700">Total</span>
@@ -136,10 +159,10 @@ export default function OrderPreview({
         </div>
 
         <button
-          disabled={items.length === 0}
+          disabled={items.length === 0 || !tableId}
           onClick={handlesubmitOrder}
           className={`w-full py-3 rounded-lg font-semibold
-            ${items.length === 0
+            ${items.length === 0 || !tableId
               ? 'bg-gray-300 text-gray-500'
               : 'bg-gray-800 text-white hover:bg-gray-900'
             }`}

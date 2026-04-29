@@ -13,7 +13,6 @@ export default function AddTableModal({ open, onOpenChange }) {
     setError("")
   }
 
-  // ========== HANDLER ===============
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -27,12 +26,13 @@ export default function AddTableModal({ open, onOpenChange }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tableName: name,
+          name,
           qr_code_id,
         }),
       })
 
       const data = await res.json()
+
       if (!res.ok) {
         setError(data.message || "Failed to create table")
         return
@@ -58,7 +58,6 @@ export default function AddTableModal({ open, onOpenChange }) {
         className="w-full max-w-md rounded-xl bg-white shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="border-b px-6 py-4">
           <h2 className="text-lg font-semibold">Add new table</h2>
           <p className="text-sm text-gray-500">
@@ -66,7 +65,6 @@ export default function AddTableModal({ open, onOpenChange }) {
           </p>
         </div>
 
-        {/* Body */}
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">
@@ -88,7 +86,6 @@ export default function AddTableModal({ open, onOpenChange }) {
             </p>
           )}
 
-          {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
