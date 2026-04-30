@@ -17,13 +17,14 @@ const AuthProvider = ({ children }) => {
             setLoading(false)
         })
 
-        const { data: listener } = client.auth.onAuthStateChange((e, session) => {
+        const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user || null)
             setAccessToken(session?.access_token || null)
+            setLoading(false)
         })
 
         return () => {
-            listener.subscription.unsubscribe() 
+            listener.subscription.unsubscribe()
         }
     }, [])
 

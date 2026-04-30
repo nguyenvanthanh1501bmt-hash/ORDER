@@ -1,80 +1,90 @@
-'use client';
+'use client'
 
-import { useState } from "react";
+import { useState } from "react"
+import { authFetch } from "@/utils/authFetch"
+import client from "@/api/client"
 
 export default function AddFoodModal({ open, onOpenChange }) {
-    const [name, setName] = useState("");
-    const [price, setPrice] = useState("");
-    const [category, setCategory] = useState("");
-    const [subCategory, setSubCategory] = useState("");
-    const [options, setOptions] = useState([]);
-    const [imageUrl, setImageUrl] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [name, setName] = useState("")
+    const [price, setPrice] = useState("")
+    const [category, setCategory] = useState("")
+    const [subCategory, setSubCategory] = useState("")
+    const [options, setOptions] = useState([])
+    const [imageUrl, setImageUrl] = useState("")
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState("")
 
     const resetForm = () => {
-        setName("");
-        setPrice("");
-        setCategory("");
-        setSubCategory("");
-        setOptions([]);
-        setImageUrl("");
-        setError("");
-    };
+        setName("")
+        setPrice("")
+        setCategory("")
+        setSubCategory("")
+        setOptions([])
+        setImageUrl("")
+        setError("")
+    }
 
     const handleImageUpload = async (file) => {
-        if (!file) return;
+        if (!file) return
 
         try {
-            setLoading(true);
+            setLoading(true)
 
             const sanitizeFileName = (name) =>
                 name
                     .normalize("NFD")
                     .replace(/[\u0300-\u036f]/g, "")
                     .replace(/\s+/g, "_")
-                    .replace(/[^a-zA-Z0-9._-]/g, "");
+                    .replace(/[^a-zA-Z0-9._-]/g, "")
 
             const sanitizedFile = new File(
                 [file],
                 `${Date.now()}-${sanitizeFileName(file.name)}`,
                 { type: file.type }
-            );
+            )
 
-            const formData = new FormData();
-            formData.append("file", sanitizedFile);
+            const formData = new FormData()
+            formData.append("file", sanitizedFile)
+
+            const { data: sessionData } = await client.auth.getSession()
+            const token = sessionData.session?.access_token
 
             const res = await fetch("/api/menu/upload-image", {
                 method: "POST",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
                 body: formData,
-            });
+            })
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Upload failed");
+            const data = await res.json().catch(() => ({
+                error: "Invalid server response",
+            }))
 
-            setImageUrl(data.url);
+            if (!res.ok) throw new Error(data.error || "Upload failed")
+
+            setImageUrl(data.url)
         } catch (err) {
-            setError(err.message);
+            setError(err.message || "Upload failed")
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    };
+    }
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError("");
+        e.preventDefault()
+        setError("")
 
         if (!name || !price || !category) {
-            setError("Food name, price and category are required");
-            return;
+            setError("Food name, price and category are required")
+            return
         }
 
         try {
-            setLoading(true);
+            setLoading(true)
 
-            const res = await fetch("/api/menu_items", {
+            const res = await authFetch("/api/menu_items", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name,
                     price: Number(price),
@@ -83,24 +93,27 @@ export default function AddFoodModal({ open, onOpenChange }) {
                     options,
                     image_url: imageUrl,
                 }),
-            });
+            })
 
-            const data = await res.json();
+            const data = await res.json().catch(() => ({
+                message: "Invalid server response",
+            }))
+
             if (!res.ok) {
-                setError(data.message || "Something went wrong");
-                return;
+                setError(data.message || "Something went wrong")
+                return
             }
 
-            resetForm();
-            onOpenChange(false);
+            resetForm()
+            onOpenChange(false)
         } catch {
-            setError("Cannot connect to server");
+            setError("Cannot connect to server")
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    };
+    }
 
-    if (!open) return null;
+    if (!open) return null
 
     return (
         <div
@@ -111,7 +124,6 @@ export default function AddFoodModal({ open, onOpenChange }) {
                 className="bg-white w-full max-w-xl rounded-xl shadow-xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
                 <div className="px-6 py-4 border-b">
                     <h2 className="text-lg font-semibold text-gray-800">
                         Add New Food
@@ -121,9 +133,7 @@ export default function AddFoodModal({ open, onOpenChange }) {
                     </p>
                 </div>
 
-                {/* Form */}
                 <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-                    {/* Food name */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Food name *
@@ -137,7 +147,6 @@ export default function AddFoodModal({ open, onOpenChange }) {
                         />
                     </div>
 
-                    {/* Price */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Price (VND) *
@@ -151,7 +160,6 @@ export default function AddFoodModal({ open, onOpenChange }) {
                         />
                     </div>
 
-                    {/* Category */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Category *
@@ -165,7 +173,6 @@ export default function AddFoodModal({ open, onOpenChange }) {
                         />
                     </div>
 
-                    {/* Sub category */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Description / Sub category
@@ -179,7 +186,6 @@ export default function AddFoodModal({ open, onOpenChange }) {
                         />
                     </div>
 
-                    {/* Options */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Options (JSON)
@@ -188,15 +194,17 @@ export default function AddFoodModal({ open, onOpenChange }) {
                             type="text"
                             placeholder='Example: ["Size S","Size M","Size L"]'
                             onChange={e => {
-                                try { setOptions(JSON.parse(e.target.value)); }
-                                catch { setOptions([]); }
+                                try {
+                                    setOptions(JSON.parse(e.target.value))
+                                } catch {
+                                    setOptions([])
+                                }
                             }}
                             className="w-full rounded-lg border px-3 py-2 text-sm
                                        focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         />
                     </div>
 
-                    {/* Image upload */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Food image
@@ -214,31 +222,33 @@ export default function AddFoodModal({ open, onOpenChange }) {
                         )}
                     </div>
 
-                    {/* Error */}
                     {error && (
                         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
                             {error}
                         </p>
                     )}
 
-                    {/* Actions */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button
                             type="button"
                             className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            onClick={() => { resetForm(); onOpenChange(false); }}
+                            onClick={() => {
+                                resetForm()
+                                onOpenChange(false)
+                            }}
                             disabled={loading}
                         >
                             Cancel
                         </button>
+
                         <button
                             type="submit"
                             disabled={loading}
                             className={`px-4 py-2 rounded-lg text-white font-semibold
                               ${loading
-                                ? "bg-blue-400 cursor-not-allowed"
-                                : "bg-blue-600 hover:bg-blue-700"
-                              }`}
+                                    ? "bg-blue-400 cursor-not-allowed"
+                                    : "bg-blue-600 hover:bg-blue-700"
+                                }`}
                         >
                             {loading ? "Saving..." : "Save"}
                         </button>
@@ -246,5 +256,5 @@ export default function AddFoodModal({ open, onOpenChange }) {
                 </form>
             </div>
         </div>
-    );
+    )
 }

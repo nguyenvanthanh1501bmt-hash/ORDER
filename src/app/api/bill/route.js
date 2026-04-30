@@ -24,6 +24,10 @@ export async function GET(req) {
         tables (
           id,
           name
+        ),
+        orders (
+          id,
+          status
         )
       `)
       .eq("status", "open");
@@ -33,7 +37,7 @@ export async function GET(req) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data || []);
   } catch (err) {
     return NextResponse.json(
       { error: err.message || "Server error" },

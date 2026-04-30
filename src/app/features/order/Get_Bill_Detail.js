@@ -1,20 +1,26 @@
+import { authFetch } from "@/utils/authFetch"
+
 export async function getBillDetail(billId) {
-  if (!billId) return null
+    if (!billId) return null
 
-  const res = await fetch("/api/bill", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ billId }),
-  })
+    try {
+        const res = await authFetch("/api/bill", {
+            method: "POST",
+            body: JSON.stringify({ billId }),
+        })
 
-  if (!res.ok) {
-    console.error("Failed to fetch bill detail")
-    return null
-  }
+        const response = await res.json().catch(() => ({
+            message: "Invalid server response",
+        }))
 
-  const response = await res.json()
-  // Handle new response format: { success, data, message }
-  return response.data || response
+        if (!res.ok) {
+            console.error(response.message || "Failed to fetch bill detail")
+            return null
+        }
+
+        return response.data || response
+    } catch (error) {
+        console.error("Error fetching bill detail:", error)
+        return null
+    }
 }

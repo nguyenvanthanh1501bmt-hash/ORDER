@@ -1,28 +1,24 @@
-export async function getOrdersAvailable(accessToken) {
-    try{
-        const headers = {
-            'Content-Type': 'application/json',
-        }
+import { authFetch } from "@/utils/authFetch"
 
-        // Add authorization header if token is available
-        if (accessToken) {
-            headers['Authorization'] = `Bearer ${accessToken}`
-        }
-
-        const res = await fetch('/api/orders', {
-            cache: 'no-store',
-            headers,
+export async function getOrdersAvailable() {
+    try {
+        const res = await authFetch("/api/orders", {
+            method: "GET",
+            cache: "no-store",
         })
 
+        const response = await res.json().catch(() => ({
+            message: "Invalid server response",
+            data: [],
+        }))
+
         if (!res.ok) {
-            throw new Error('Failed to load orders')
+            throw new Error(response.message || "Failed to load orders")
         }
 
-        const response = await res.json()
-        // Handle new response format: { success, data, message }
         return response.data || []
-    }
-    catch(err){
-        throw err;
+    } catch (err) {
+        console.error("Error fetching orders:", err)
+        return []
     }
 }

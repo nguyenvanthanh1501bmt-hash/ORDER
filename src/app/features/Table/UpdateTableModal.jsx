@@ -1,113 +1,113 @@
 'use client'
 
 import { useEffect, useState } from "react"
+import { authFetch } from "@/utils/authFetch"
 
 export default function UpdateTableModal({ open, onOpenChange, table }) {
-  const [name, setName] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+    const [name, setName] = useState("")
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState("")
 
-  useEffect(() => {
-    if (table) {
-      setName(table.name || "")
-      setError("")
+    useEffect(() => {
+        if (table) {
+            setName(table.name || "")
+            setError("")
+        }
+    }, [table])
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+
+        if (!table?.id) {
+            setError("Table ID is missing")
+            return
+        }
+
+        try {
+            setLoading(true)
+            setError("")
+
+            const res = await authFetch(`/api/table?id=${table.id}`, {
+                method: "PUT",
+                body: JSON.stringify({
+                    name,
+                }),
+            })
+
+            const data = await res.json().catch(() => ({
+                message: "Invalid server response",
+            }))
+
+            if (!res.ok) {
+                setError(data.message || "Failed to update table")
+                return
+            }
+
+            onOpenChange(false)
+        } catch (err) {
+            setError(err.message || "Server error")
+        } finally {
+            setLoading(false)
+        }
     }
-  }, [table])
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+    if (!open || !table) return null
 
-    if (!table?.id) {
-      setError("Table ID is missing")
-      return
-    }
+    return (
+        <div
+            className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+            onClick={() => onOpenChange(false)}
+        >
+            <div
+                className="bg-white w-full max-w-sm rounded-xl shadow-lg p-6"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="mb-5">
+                    <h1 className="text-lg font-semibold">Update Table</h1>
+                    <p className="text-sm text-gray-500">
+                        Edit table information
+                    </p>
+                </div>
 
-    try {
-      setLoading(true)
-      setError("")
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block mb-1 text-sm font-medium">
+                            Table Name
+                        </label>
+                        <input
+                            autoFocus
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                            required
+                        />
+                    </div>
 
-      const res = await fetch(`/api/table?id=${table.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-        }),
-      })
+                    {error && (
+                        <p className="text-sm text-red-500">{error}</p>
+                    )}
 
-      const data = await res.json().catch(() => ({
-        message: "Invalid server response",
-      }))
+                    <div className="flex justify-end gap-2 pt-2">
+                        <button
+                            type="button"
+                            disabled={loading}
+                            className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                            onClick={() => onOpenChange(false)}
+                        >
+                            Cancel
+                        </button>
 
-      if (!res.ok) {
-        setError(data.message || "Failed to update table")
-        return
-      }
-
-      onOpenChange(false)
-    } catch (err) {
-      setError(err.message || "Server error")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (!open || !table) return null
-
-  return (
-    <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-      onClick={() => onOpenChange(false)}
-    >
-      <div
-        className="bg-white w-full max-w-sm rounded-xl shadow-lg p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-5">
-          <h1 className="text-lg font-semibold">Update Table</h1>
-          <p className="text-sm text-gray-500">
-            Edit table information
-          </p>
+                        <button
+                            type="submit"
+                            disabled={loading || !name.trim()}
+                            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+                        >
+                            {loading ? "Saving..." : "Save"}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1 text-sm font-medium">
-              Table Name
-            </label>
-            <input
-              autoFocus
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              required
-            />
-          </div>
-
-          {error && (
-            <p className="text-sm text-red-500">{error}</p>
-          )}
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              disabled={loading}
-              className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              disabled={loading || !name.trim()}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
-            >
-              {loading ? "Saving..." : "Save"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
+    )
 }

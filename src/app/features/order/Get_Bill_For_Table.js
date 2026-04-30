@@ -1,12 +1,33 @@
+import { authFetch } from "@/utils/authFetch"
+
 export async function getOpenBills() {
-  const res = await fetch("/api/bill")
+    try {
+        const res = await authFetch("/api/bill", {
+            method: "GET",
+            cache: "no-store",
+        })
 
-  if (!res.ok) {
-    console.error("Failed to fetch open bills")
-    return []
-  }
+        const response = await res.json().catch(() => ({
+            message: "Invalid server response",
+            data: [],
+        }))
 
-  const response = await res.json()
-  // Handle new response format: { success, data, message }
-  return response.data || []
+        console.log("GET /api/bill response:", response)
+
+        if (!res.ok) {
+            console.error(response.message || "Failed to fetch open bills")
+            return []
+        }
+
+        // API có thể trả trực tiếp array: [...]
+        if (Array.isArray(response)) {
+            return response
+        }
+
+        // Hoặc trả format mới: { success, data, message }
+        return response.data || []
+    } catch (error) {
+        console.error("Error fetching open bills:", error)
+        return []
+    }
 }

@@ -2,25 +2,11 @@
 
 import { CreditCard, Table2 } from 'lucide-react'
 
-/**
- * TableListUIForTableCheck
- *
- * Purpose:
- * - Display list of tables
- * - Show table status (Available / Occupied)
- * - Allow checkout action for tables with open bills
- *
- * Props:
- * @param {Array} table       - List of tables
- * @param {Object} openBills  - Map: tableId -> bill object
- * @param {Function} onCheckout - Trigger checkout for selected bill
- */
 export default function TableListUIForTableCheck({
   table = [],
   openBills = {},
   onCheckout,
 }) {
-  // Empty state
   if (table.length === 0) {
     return (
       <p className="text-sm text-muted-foreground italic">
@@ -30,28 +16,23 @@ export default function TableListUIForTableCheck({
   }
 
   return (
-    /**
-     * Responsive grid
-     * - 2 columns on mobile
-     * - 3 columns on small screens
-     * - 4 columns on desktop
-     */
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
       {table.map((tb) => {
-        // Get open bill for current table (if exists)
-        const bill = openBills[tb.id]
+        const tableId = tb.id ?? tb.table_id
 
-        // Determine table status
-        const hasOpenBill = bill?.status === 'open'
+        const bill =
+          openBills[String(tableId)] ||
+          openBills[`name:${tb.name}`]
+
+        const orders = bill?.orders || []
+
+        const hasOpenBill = orders.some((order) =>
+          ['accepted', 'served'].includes(order.status)
+        )
 
         return (
-          /**
-           * Table Card
-           * - Green: Available
-           * - Red: Occupied
-           */
           <div
-            key={tb.id}
+            key={tb.id ?? tb.table_id ?? tb.name}
             className={`
               group relative rounded-xl border
               p-4 sm:p-5
@@ -64,9 +45,7 @@ export default function TableListUIForTableCheck({
               }
             `}
           >
-            {/* ================= Header ================= */}
             <div className="flex items-center justify-between">
-              {/* Table name + icon */}
               <div className="flex items-center gap-2">
                 <Table2
                   className={`w-4 h-4 ${
@@ -81,7 +60,6 @@ export default function TableListUIForTableCheck({
                 </span>
               </div>
 
-              {/* Status badge */}
               <span
                 className={`
                   text-[10px] sm:text-xs
@@ -97,15 +75,9 @@ export default function TableListUIForTableCheck({
               </span>
             </div>
 
-            {/* Divider between header and action */}
             <div className="my-3 border-t border-dashed" />
 
-            {/* ================= Footer / Action ================= */}
             {hasOpenBill ? (
-              /**
-               * Checkout button
-               * Visible only when table has an open bill
-               */
               <button
                 onClick={() => onCheckout(bill)}
                 className="
@@ -122,9 +94,6 @@ export default function TableListUIForTableCheck({
                 Checkout
               </button>
             ) : (
-              /**
-               * Available state (no action)
-               */
               <div className="text-center text-xs sm:text-sm text-muted-foreground">
                 Ready to serve
               </div>

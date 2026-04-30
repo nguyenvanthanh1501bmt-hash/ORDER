@@ -1,23 +1,23 @@
-// services/menu.js
+import { authFetch } from "@/utils/authFetch"
+
 export async function getFoodList() {
     try {
-        const res = await fetch('/api/menu_items', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
+        const res = await authFetch("/api/menu_items", {
+            method: "GET",
+        })
+
+        const response = await res.json().catch(() => ({
+            message: "Invalid server response",
+            data: [],
+        }))
 
         if (!res.ok) {
-            throw new Error('Failed to fetch food list');
+            throw new Error(response.message || "Failed to fetch food list")
         }
 
-        const response = await res.json();
-        // Handle new response format: { success, data, message }
-        return response.data || [];
-
+        return response.data || []
     } catch (error) {
-        console.error('Error fetching food list:', error);
-        return [];
+        console.error("Error fetching food list:", error)
+        return []
     }
 }

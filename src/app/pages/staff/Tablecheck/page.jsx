@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import TableListUIForTableCheck from "@/app/features/order/TableListUIForTableCheck"
 import BillDetailModal from "@/app/features/order/Modal_Bill_Detail"
 import CustomAlert from "@/app/components/CustomAlert"
+import { authFetch } from "@/utils/authFetch"
 
 export default function TableCheck() {
   const [tableList, setTableList] = useState([])
@@ -19,72 +20,93 @@ export default function TableCheck() {
 
   const [alerttext, setalerttext] = useState(null)
 
-  // ==================== FETCH DATA (BILL, TABLE LIST) =====================
   const fetchData = async () => {
     setLoading(true)
 
-    const [tables, bills] = await Promise.all([
-      getTableList(),
-      getOpenBills(),
-    ])
+    try {
+      const [tables, bills] = await Promise.all([
+        getTableList(),
+        getOpenBills(),
+      ])
 
-    if (tables) setTableList(tables)
-    
-    // Convert open bills array into a map key by table_id
-    const billMap = {}
-    bills?.forEach(bill => {
-      billMap[bill.table_id] = bill
-    })
+      setTableList(tables || [])
 
-    setOpenBills(billMap)
-    setLoading(false)
+      const billMap = {}
+
+      bills?.forEach((bill) => {
+        if (bill.table_id) {
+          billMap[String(bill.table_id)] = bill
+        }
+
+        if (bill.tables?.id) {
+          billMap[String(bill.tables.id)] = bill
+        }
+
+        if (bill.tables?.name) {
+          billMap[`name:${bill.tables.name}`] = bill
+        }
+      })
+
+      console.log("TABLE LIST:", tables)
+      console.log("OPEN BILLS:", bills)
+      console.log("BILL MAP:", billMap)
+
+      setOpenBills(billMap)
+    } catch (err) {
+      console.error("Error fetching table check data:", err)
+      setTableList([])
+      setOpenBills({})
+    } finally {
+      setLoading(false)
+    }
   }
 
-
-  // ============== MODAL CHECK DETAIL BILL ====================
   const onViewBill = async (bill) => {
     if (!bill) return
 
-    // fetch detail item of the bill
     const detail = await getBillDetail(bill.id)
 
-    // set this bill selected
     setSelectedBill(bill)
     setBillDetail(detail)
     setShowModal(true)
   }
 
-  // ==================== HANDLER =======================
   const handlePayment = async (bill) => {
-    if (!bill?.id) return
+  if (!bill?.id) return
 
-    try {
-      const res = await fetch("/api/bill?action=status", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tableId: bill.id }),
-      })
+  try {
+    const res = await authFetch("/api/bill?action=status", {
+      method: "PATCH",
+      body: JSON.stringify({
+        billId: bill.id,
+        id: bill.id,
+        tableId: bill.table_id,
+        status: "closed",
+      }),
+    })
 
-      const result = await res.json()
+    const result = await res.json().catch(() => ({
+      message: "Invalid server response",
+    }))
 
-      if (!res.ok) {
-        setalerttext(result.message || "Cannot close bill")
-        return
-      }
-
-      // suscess -> close bill modal + set selected bill and detail null  
-      setShowModal(false)
-      setSelectedBill(null)
-      setBillDetail(null)
-
-      setalerttext("closeBill successfully, now table are available")
-
-      await fetchData()
-    } catch (err) {
-      console.error("System error during payment:", err)
-      setalerttext("System error during payment")
+    if (!res.ok) {
+      console.error("Close bill failed:", result)
+      setalerttext(result.message || "Cannot close bill")
+      return
     }
+
+    setShowModal(false)
+    setSelectedBill(null)
+    setBillDetail(null)
+
+    setalerttext("Close bill successfully, now table is available")
+
+    await fetchData()
+  } catch (err) {
+    console.error("System error during payment:", err)
+    setalerttext("System error during payment")
   }
+}
 
   useEffect(() => {
     fetchData()
@@ -101,8 +123,6 @@ export default function TableCheck() {
           Loading tables...
         </p>
       ) : (
-
-        // RENDER TABLE ARE AVAILABLE OR OCCUPIED
         <TableListUIForTableCheck
           table={tableList}
           openBills={openBills}
@@ -110,7 +130,6 @@ export default function TableCheck() {
         />
       )}
 
-      {/* DETAIL BILL MODAL SHOW */}
       {showModal && (
         <BillDetailModal
           bill={selectedBill}

@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import useRoleRedirect from '@/hooks/useRoleRedirect'
 import { getOrdersAvailable } from '@/app/features/order/OrderAvailable'
 import OrderAvailableUI from '@/app/features/order/OrderAvailableUI'
+import { authFetch } from '@/utils/authFetch'
 
-export default function TableCheck(){
+export default function TableCheck() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [expandedOrders, setExpandedOrders] = useState(new Set())
@@ -22,11 +22,11 @@ export default function TableCheck(){
         setLoading(false)
       }
     }
+
     fetchOrders()
   }, [])
 
-
-  // ================= EXPAND OR COLAP ORDERS =============================
+  // ================= EXPAND OR COLLAPSE ORDERS =============================
   const toggleOrder = (orderId) => {
     setExpandedOrders(prev => {
       const next = new Set(prev)
@@ -35,25 +35,24 @@ export default function TableCheck(){
     })
   }
 
-
   // ==================== HANDLERS ==========================
   const handleApprove = async (orderId) => {
     try {
-      const res = await fetch(`/api/orders?id=${orderId}`, {
+      const res = await authFetch(`/api/orders?id=${orderId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           status: 'accepted',
         }),
       })
 
+      const data = await res.json().catch(() => ({
+        message: 'Invalid server response',
+      }))
+
       if (!res.ok) {
-        throw new Error('Approve failed')
+        throw new Error(data.message || 'Approve failed')
       }
 
-      // update status from pending staff approval -> accepted
       setOrders(prev =>
         prev.map(order =>
           order.id === orderId
@@ -62,44 +61,39 @@ export default function TableCheck(){
         )
       )
 
-      // close dropdown
       setExpandedOrders(prev => {
         const next = new Set(prev)
         next.delete(orderId)
         return next
       })
-
     } catch (err) {
       console.error(err)
     }
   }
 
-
   const handleReject = async (orderId) => {
     try {
-      const res = await fetch(`/api/orders?id=${orderId}`, {
+      const res = await authFetch(`/api/orders?id=${orderId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       })
 
+      const data = await res.json().catch(() => ({
+        message: 'Invalid server response',
+      }))
+
       if (!res.ok) {
-        throw new Error('Reject failed')
+        throw new Error(data.message || 'Reject failed')
       }
 
-      // remove order 
       setOrders(prev =>
         prev.filter(order => order.id !== orderId)
       )
 
-      // close dropdown
       setExpandedOrders(prev => {
         const next = new Set(prev)
         next.delete(orderId)
         return next
       })
-
     } catch (err) {
       console.error(err)
     }
@@ -107,42 +101,38 @@ export default function TableCheck(){
 
   const handleDone = async (orderId) => {
     try {
-      const res = await fetch(`/api/orders?id=${orderId}`, {
+      const res = await authFetch(`/api/orders?id=${orderId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           status: 'served',
         }),
       })
 
+      const data = await res.json().catch(() => ({
+        message: 'Invalid server response',
+      }))
+
       if (!res.ok) {
-        throw new Error('Complete failed')
+        throw new Error(data.message || 'Complete failed')
       }
 
-      // unrendered after done 
       setOrders(prev =>
         prev.filter(order => order.id !== orderId)
       )
 
-      // close dropdown
       setExpandedOrders(prev => {
         const next = new Set(prev)
         next.delete(orderId)
         return next
       })
-
     } catch (err) {
       console.error(err)
     }
   }
 
-
   if (loading) return <p>Loading...</p>
 
   return (
-    // RENDER UI
     <OrderAvailableUI
       orders={orders}
       expandedOrders={expandedOrders}

@@ -1,22 +1,23 @@
+import { authFetch } from "@/utils/authFetch"
+
 export async function getEmployeeList() {
     try {
-        const res = await fetch('/api/admin', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
+        const res = await authFetch("/api/admin", {
+            method: "GET",
+        })
+
+        const response = await res.json().catch(() => ({
+            message: "Invalid server response",
+            data: [],
+        }))
 
         if (!res.ok) {
-            throw new Error('Failed to fetch employee list');
+            throw new Error(response.message || "Failed to fetch employee list")
         }
-        
-        const response = await res.json();
-        // Handle new response format: { success, data, message }
-        return response.data || [];
 
+        return response.data || []
     } catch (error) {
-        console.error('Error fetching employee list:', error);
-        return [];
+        console.error("Error fetching employee list:", error)
+        return []
     }
 }

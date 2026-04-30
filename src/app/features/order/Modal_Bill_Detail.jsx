@@ -1,7 +1,22 @@
 'use client'
 
+import { useState } from "react"
+
 export default function BillDetailModal({ bill, billDetail, onClose, onPayment }) {
+  const [loading, setLoading] = useState(false)
+
   if (!billDetail) return null
+
+  const handlePay = async () => {
+    if (!bill) return
+
+    try {
+      setLoading(true)
+      await onPayment(bill)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
@@ -22,13 +37,14 @@ export default function BillDetailModal({ bill, billDetail, onClose, onPayment }
               Bill Detail
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Table {bill?.tables?.name}
+              Table {bill?.tables?.name || bill?.table_id}
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-black text-xl leading-none"
+            disabled={loading}
+            className="text-gray-500 hover:text-black text-xl leading-none disabled:opacity-50"
           >
             ✕
           </button>
@@ -36,9 +52,9 @@ export default function BillDetailModal({ bill, billDetail, onClose, onPayment }
 
         {/* Content */}
         <div className="flex-1 px-4 sm:px-6 py-3 sm:py-4 overflow-y-auto space-y-4">
-          {billDetail.orders.map(order => (
+          {billDetail.orders?.map(order => (
             <div key={order.id} className="space-y-2">
-              {order.order_items.map(item => (
+              {order.order_items?.map(item => (
                 <div
                   key={item.id}
                   className="flex justify-between gap-4 border-b pb-2"
@@ -66,16 +82,17 @@ export default function BillDetailModal({ bill, billDetail, onClose, onPayment }
           <div className="flex justify-between items-center text-sm sm:text-base font-semibold">
             <span>Total</span>
             <span className="text-red-600">
-              {Number(billDetail.total_amount).toLocaleString()}đ
+              {Number(billDetail.total_amount || 0).toLocaleString()}đ
             </span>
           </div>
 
           <div className="mt-4 flex justify-end">
             <button
-              onClick={() => onPayment(bill)}
-              className="w-full sm:w-auto px-4 py-2 rounded-lg border text-sm hover:bg-gray-50"
+              onClick={handlePay}
+              disabled={loading}
+              className="w-full sm:w-auto px-4 py-2 rounded-lg border text-sm hover:bg-gray-50 disabled:opacity-60"
             >
-              Pay
+              {loading ? "Processing..." : "Pay"}
             </button>
           </div>
         </div>
