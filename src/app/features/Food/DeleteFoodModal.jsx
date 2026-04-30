@@ -16,7 +16,7 @@ export default function DeleteFoodModal({ open, onOpenChange, food }) {
     setErr(null)
 
     try {
-      const res = await fetch(`/api/menu_items/delete-menu_items?id=${food.id}`, {
+      const res = await fetch(`/api/menu_items?id=${food.id}`, {
         method: "DELETE",
       })
 

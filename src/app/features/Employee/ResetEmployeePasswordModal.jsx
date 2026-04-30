@@ -24,8 +24,8 @@ export default function ResetPasswordModal({ open, onOpenChange, employee }) {
     setError(null)
 
     try {
-      const res = await fetch(`/api/admin/reset-password?id=${employee.id}`, {
-        method: "POST",
+      const res = await fetch(`/api/admin?id=${employee.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       })

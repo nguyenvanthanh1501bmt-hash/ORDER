@@ -1,7 +1,7 @@
 // services/menu.js
 export async function getFoodList() {
     try {
-        const res = await fetch('/api/menu_items/get-menu_items', {
+        const res = await fetch('/api/menu_items', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

@@ -1,7 +1,7 @@
 export async function getBillDetail(billId) {
   if (!billId) return null
 
-  const res = await fetch("/api/bill/get-bill-detail", {
+  const res = await fetch("/api/bill", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

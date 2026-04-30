@@ -59,7 +59,7 @@ export default function UpdateFoodModal({ open, onOpenChange, food, onUpdated })
         uploadedUrl = uploadData.url
       }
 
-      const res = await fetch(`/api/menu_items/update-menu_items?id=${food.id}`, {
+      const res = await fetch(`/api/menu_items?id=${food.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

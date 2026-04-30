@@ -18,7 +18,7 @@ export default function ConfirmDeleteTableModal({
       setLoading(true)
       setError("")
 
-      const res = await fetch(`/api/table/delete-table?id=${table.id}`, {
+      const res = await fetch(`/api/table?id=${table.id}`, {
         method: "DELETE",
       })
 

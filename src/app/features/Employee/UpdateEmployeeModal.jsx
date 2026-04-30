@@ -31,7 +31,7 @@ export default function UpdateEmployeeModal({ open, onOpenChange, Employee }) {
     setErr("")
 
     try {
-      const res = await fetch(`/api/admin/update-staff?id=${Employee.id}`, {
+      const res = await fetch(`/api/admin?id=${Employee.id}`, {
         method: "PUT",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

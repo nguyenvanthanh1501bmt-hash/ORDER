@@ -25,7 +25,7 @@ export default function AddEmployeeModal({ open, onOpenChange }) {
             setLoading(true);
             setError("");
 
-            const res = await fetch('/api/admin/create-staff', {
+            const res = await fetch('/api/admin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, role, email, password }),

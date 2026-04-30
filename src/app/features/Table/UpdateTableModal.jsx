@@ -26,8 +26,8 @@ export default function UpdateTableModal({ open, onOpenChange, table }) {
       setLoading(true)
       setError("")
 
-      const res = await fetch(`/api/table/update-table?id=${table.id}`, {
-        method: "POST",
+      const res = await fetch(`/api/table?id=${table.id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,

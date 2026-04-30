@@ -1,6 +1,6 @@
 export async function getEmployeeList() {
     try {
-        const res = await fetch('/api/admin/get-staff', {
+        const res = await fetch('/api/admin', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

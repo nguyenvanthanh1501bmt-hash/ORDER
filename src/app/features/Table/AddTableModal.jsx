@@ -22,7 +22,7 @@ export default function AddTableModal({ open, onOpenChange }) {
 
       const qr_code_id = generateTableQRCode({ id: Date.now(), name })
 
-      const res = await fetch("/api/table/create-table", {
+      const res = await fetch("/api/table", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

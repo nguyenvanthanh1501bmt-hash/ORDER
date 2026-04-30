@@ -16,7 +16,7 @@ export default function DeleteEmployeeModal({ open, onOpenChange, employee }) {
     setErr(null)
 
     try {
-      const res = await fetch(`/api/admin/delete-staff?id=${employee.id}`, {
+      const res = await fetch(`/api/admin?id=${employee.id}`, {
         method: "DELETE",
       })
 

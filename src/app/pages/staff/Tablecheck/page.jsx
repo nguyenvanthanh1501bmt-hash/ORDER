@@ -59,10 +59,10 @@ export default function TableCheck() {
     if (!bill?.id) return
 
     try {
-      const res = await fetch("/api/bill/update-bill-status", {
+      const res = await fetch("/api/bill?action=status", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bill_id: bill.id }),
+        body: JSON.stringify({ tableId: bill.id }),
       })
 
       const result = await res.json()

@@ -1,6 +1,6 @@
 export async function getTableList() {
   try {
-    const res = await fetch("/api/table/get-table", {
+    const res = await fetch("/api/table", {
       cache: "no-store",
     });
 

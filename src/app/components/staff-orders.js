@@ -29,7 +29,7 @@ export default function StaffOrders() {
   }, []);
 
   const handleAccept = async (orderId) => {
-    await fetch(`/api/orders/update-status-order?id=${orderId}`, {
+    await fetch(`/api/orders?id=${orderId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'accepted' })
@@ -42,7 +42,7 @@ export default function StaffOrders() {
 
   const handleReject = async (orderId) => {
     // Gửi request xóa order ở server
-    await fetch(`/api/orders/delete-order?id=${orderId}`, {
+    await fetch(`/api/orders?id=${orderId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });

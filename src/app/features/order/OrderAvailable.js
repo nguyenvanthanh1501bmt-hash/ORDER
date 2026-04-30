@@ -1,6 +1,6 @@
 export  async function getOrdersAvailable() {
     try{
-        const res = await fetch('/api/orders/get-order', {
+        const res = await fetch('/api/orders', {
             cache: 'no-store',
         })
 

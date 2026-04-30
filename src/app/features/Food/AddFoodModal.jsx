@@ -72,7 +72,7 @@ export default function AddFoodModal({ open, onOpenChange }) {
         try {
             setLoading(true);
 
-            const res = await fetch("/api/menu_items/create-menu_items", {
+            const res = await fetch("/api/menu_items", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
