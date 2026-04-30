@@ -1,15 +1,19 @@
 import { supabaseAdmin } from "@/api/adminClient";
 import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/auth";
 
 /**
  * Consolidated Bills API Routes
- * GET    /api/bill - Get all open bills
- * POST   /api/bill - Get bill detail (billId in body)
- * PATCH  /api/bill?action=close - Close bill (bill_id in body)
- * PATCH  /api/bill?action=status - Update bill status for table (tableId in body)
+ * GET    /api/bill - Get all open bills (staff/admin only)
+ * POST   /api/bill - Get bill detail (staff/admin only)
+ * PATCH  /api/bill?action=close - Close bill (staff/admin only)
+ * PATCH  /api/bill?action=status - Update bill status for table (staff/admin only)
  */
 
 export async function GET(req) {
+  const auth = await requireRole(req, ["admin", "staff"]);
+  if (auth.error) return auth.error;
+
   try {
     const { data, error } = await supabaseAdmin
       .from("bills")
@@ -39,6 +43,9 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
+  const auth = await requireRole(req, ["admin", "staff"]);
+  if (auth.error) return auth.error;
+
   try {
     const { billId } = await req.json();
 
@@ -95,6 +102,9 @@ export async function POST(req) {
 }
 
 export async function PATCH(req) {
+  const auth = await requireRole(req, ["admin", "staff"]);
+  if (auth.error) return auth.error;
+
   try {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get("action"); // "close" or "status"

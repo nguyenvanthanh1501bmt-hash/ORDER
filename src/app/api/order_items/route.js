@@ -1,12 +1,16 @@
 import { supabaseAdmin } from "@/api/adminClient";
+import { requireRole } from "@/lib/auth";
 
 /**
  * Consolidated Order Items API Routes
- * DELETE /api/order_items?id={id} - Delete order item
- * PUT    /api/order_items?id={id} - Update order item
+ * DELETE /api/order_items?id={id} - Delete order item (staff/admin only)
+ * PUT    /api/order_items?id={id} - Update order item (staff/admin only)
  */
 
 export async function DELETE(req) {
+  const auth = await requireRole(req, ["admin", "staff"]);
+  if (auth.error) return auth.error;
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -42,6 +46,9 @@ export async function DELETE(req) {
 }
 
 export async function PUT(req) {
+  const auth = await requireRole(req, ["admin", "staff"]);
+  if (auth.error) return auth.error;
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

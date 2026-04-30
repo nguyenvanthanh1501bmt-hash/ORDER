@@ -4,16 +4,20 @@ import {
   updateOrderStatusController,
   deleteOrderController,
 } from "@/controllers/orderController";
+import { requireRole } from "@/lib/auth";
 
 /**
  * Consolidated Orders API Routes
- * GET    /api/orders - Get all pending orders
- * POST   /api/orders - Create new order
- * PATCH  /api/orders?id={id} - Update order status
- * DELETE /api/orders?id={id} - Delete order
+ * GET    /api/orders - Get all pending orders (staff/admin only)
+ * POST   /api/orders - Create new order (PUBLIC)
+ * PATCH  /api/orders?id={id} - Update order status (staff/admin only)
+ * DELETE /api/orders?id={id} - Delete order (staff/admin only)
  */
 
 export async function GET(req) {
+  const auth = await requireRole(req, ["admin", "staff"]);
+  if (auth.error) return auth.error;
+
   return getAllPendingOrdersController();
 }
 
@@ -22,6 +26,9 @@ export async function POST(req) {
 }
 
 export async function PATCH(req) {
+  const auth = await requireRole(req, ["admin", "staff"]);
+  if (auth.error) return auth.error;
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 
@@ -36,6 +43,9 @@ export async function PATCH(req) {
 }
 
 export async function DELETE(req) {
+  const auth = await requireRole(req, ["admin", "staff"]);
+  if (auth.error) return auth.error;
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 

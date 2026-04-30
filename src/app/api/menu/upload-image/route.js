@@ -1,6 +1,15 @@
 import { supabaseAdmin } from "@/api/adminClient";
+import { requireRole } from "@/lib/auth";
+
+/**
+ * Upload image to Supabase Storage
+ * POST /api/menu/upload-image - admin only
+ */
 
 export async function POST(req) {
+  const auth = await requireRole(req, ["admin"]);
+  if (auth.error) return auth.error;
+
   try {
     const formData = await req.formData();
     const file = formData.get("file");

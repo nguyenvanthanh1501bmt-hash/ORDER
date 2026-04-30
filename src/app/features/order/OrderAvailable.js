@@ -1,7 +1,17 @@
-export  async function getOrdersAvailable() {
+export async function getOrdersAvailable(accessToken) {
     try{
+        const headers = {
+            'Content-Type': 'application/json',
+        }
+
+        // Add authorization header if token is available
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`
+        }
+
         const res = await fetch('/api/orders', {
             cache: 'no-store',
+            headers,
         })
 
         if (!res.ok) {
