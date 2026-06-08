@@ -1,6 +1,6 @@
 'use client'
 
-import StaffHeader from "../../components/layout/staffheader"
+import StaffHeader from "../../../components/layout/staffheader"
 import useRoleRedirect from "@/hooks/useRoleRedirect"
 
 export default function DashboardLayout({ children }) {

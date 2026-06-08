@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from "react"
-import { generateTableQRCode } from "./GenerateQRCode"
+import { generateTableQRCode } from "../helper"
 import { authFetch } from "@/utils/authFetch"
 
 export default function AddTableModal({ open, onOpenChange }) {

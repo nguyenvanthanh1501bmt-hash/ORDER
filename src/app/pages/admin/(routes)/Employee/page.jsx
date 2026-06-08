@@ -9,7 +9,7 @@ import UpdateEmployeeModal from "../../../../features/Employee/UpdateEmployeeMod
 import DeleteEmployeeModal from "../../../../features/Employee/DeleteEmployeeModal";
 import ResetPasswordModal from "../../../../features/Employee/ResetEmployeePasswordModal";
 import EmployeelistUI from "../../../../features/Employee/EmpolyeelistUI";
-import Filterlist from "../../../../components/layout/SearchBar";
+import Filterlist from "../../../../../components/layout/SearchBar";
 
 export default function EmployeePage() {
     const [employees, setEmployees] = useState([]);

@@ -8,7 +8,7 @@ import { getTableList } from './features/Table/Table_list'
 
 import FoodlistUIatMainMenu from './features/MainMenu/MenuSection'
 import OrderPreview from './features/MainMenu/OrderPreview'
-import CustomAlert from './components/CustomAlert'
+import CustomAlert from '../components/CustomAlert'
 
 function generateId() {
   return 'xxxx-xxxx-xxxx'.replace(/x/g, () =>

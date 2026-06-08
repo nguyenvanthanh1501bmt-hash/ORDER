@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import useRoleRedirect from '@/hooks/useRoleRedirect'
-import SideNav from '../../components/layout/sidenav'
-import AdminHeader from '../../components/layout/adminheader'
+import SideNav from '../../../components/layout/sidenav'
+import AdminHeader from '../../../components/layout/adminheader'
 
 export default function DashboardLayout({ children }) {
   const { user, loading, checkingRole } = useRoleRedirect('admin')

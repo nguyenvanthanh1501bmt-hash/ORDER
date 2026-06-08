@@ -2,7 +2,7 @@
 
 import { Trash2, ShoppingBag } from 'lucide-react'
 import { addOrder } from './CallingAddorderAPI'
-import CustomAlert from '@/app/components/CustomAlert'
+import CustomAlert from '@/components/CustomAlert'
 import { useState } from 'react'
 
 export default function OrderPreview({

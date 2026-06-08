@@ -8,7 +8,7 @@ import UpdateFoodModal from "../../../../features/Food/UpdateFoodModal"
 import DeleteFoodModal from "../../../../features/Food/DeleteFoodModal"
 
 import FoodTable from "../../../../features/Food/FoodlistUI"
-import Filterlist from "../../../../components/layout/SearchBar"
+import Filterlist from "../../../../../components/layout/SearchBar"
 
 export default function Foodpage() {
   const [foodList, setFoodList] = useState([])

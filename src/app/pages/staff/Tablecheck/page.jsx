@@ -6,7 +6,7 @@ import { getBillDetail } from "@/app/features/order/Get_Bill_Detail"
 import { useEffect, useState } from "react"
 import TableListUIForTableCheck from "@/app/features/order/TableListUIForTableCheck"
 import BillDetailModal from "@/app/features/order/Modal_Bill_Detail"
-import CustomAlert from "@/app/components/CustomAlert"
+import CustomAlert from "@/components/CustomAlert"
 import { authFetch } from "@/utils/authFetch"
 
 export default function TableCheck() {

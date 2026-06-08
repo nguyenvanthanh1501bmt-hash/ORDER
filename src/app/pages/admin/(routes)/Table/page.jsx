@@ -6,7 +6,7 @@ import AddTableModal from "../../../../features/Table/AddTableModal"
 import UpdateTableModal from "../../../../features/Table/UpdateTableModal"
 import DeleteTableModal from "../../../../features/Table/DeleteTableModal"
 import TablelistUI from "../../../../features/Table/TablelistUI"
-import Filterlist from "../../../../components/layout/SearchBar"
+import Filterlist from "../../../../../components/layout/SearchBar"
 import { formatDate } from "../../../../features/helper"
 
 
