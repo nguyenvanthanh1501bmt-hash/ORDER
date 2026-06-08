@@ -114,3 +114,17 @@ export async function closeBillByTableController(req) {
     );
   }
 }
+
+export async function getAllBillsWithStatsController() {
+  try {
+    const result = await BillModel.getAllBillsWithStats()
+    return NextResponse.json(result)
+  } catch (error) {
+    console.error("[ADMIN] getAllBillsWithStats error:", error)
+
+    return NextResponse.json(
+      { error: error.message || "Failed to fetch bill history" },
+      { status: 500 }
+    )
+  }
+}

@@ -1,145 +1,184 @@
-# MVC Architecture Refactoring - Tài liệu Tham Khảo
+# MVC Architecture Guide
 
-## 📋 Cấu Trúc MVC đã tạo
+## Project Architecture Overview
+
+This project uses a simplified MVC-like structure inside a Next.js application.
 
 ```
 src/
-├── models/                 # Database operations (Tầng Model)
-│   ├── staffModel.js
+├── app/
+│   └── api/                  # API routes
+│       ├── admin/
+│       │   ├── route.js
+│       │   └── stats/route.js
+│       ├── bill/route.js
+│       ├── dashboard/route.js
+│       ├── menu_items/route.js
+│       ├── orders/route.js
+│       ├── order_items/route.js
+│       └── table/route.js
+│
+├── controllers/              # Business logic and validation
+│   ├── billController.js
+│   ├── orderController.js
+│   ├── orderItemController.js
+│   ├── menuItemController.js
+│   ├── staffController.js
+│   ├── tableController.js
+│   └── billController.js
+│
+├── models/                   # Database access and queries
+│   ├── billModel.js
 │   ├── menuItemModel.js
+│   ├── orderModel.js
+│   ├── orderItemModel.js
+│   ├── staffModel.js
 │   └── tableModel.js
 │
-├── controllers/            # Business logic (Tầng Controller)
-│   ├── staffController.js
-│   ├── menuItemController.js
-│   └── tableController.js
+├── lib/                      # Auth helpers
+│   └── auth.js
 │
-├── utils/                  # Helper functions
-│   └── response.js        # Response formatting utilities
-│
-└── app/api/               # API Routes (chỉ gọi controllers)
-    ├── admin/
-    │   ├── get-staff/route.js
-    │   ├── create-staff/route.js
-    │   ├── update-staff/route.js
-    │   ├── delete-staff/route.js
-    │   └── reset-password-staff/route.js
-    ├── table/
-    │   ├── get-table/route.js
-    │   ├── create-table/route.js
-    │   ├── update-table/route.js
-    │   ├── delete-table/route.js
-    │   └── update-table-qr-code/route.js
-    └── menu_items/
-        ├── get-menu_items/route.js
-        ├── create-menu_items/route.js
-        ├── update-menu_items/route.js
-        └── delete-menu_items/route.js
+├── utils/                    # Shared utilities
+│   ├── authFetch.js
+│   └── response.js
+└── api/                      # Supabase clients
+    ├── adminClient.js
+    └── client.js
 ```
 
-## 🏗️ Mô hình MVC đã áp dụng
+## MVC Layers in This Project
 
-### 1. **Model** (Tầng Dữ Liệu)
-Chứa tất cả logic tương tác với database:
-- `staffModel.js`: Quản lý CRUD staff + password reset
-- `menuItemModel.js`: Quản lý CRUD menu items
-- `tableModel.js`: Quản lý CRUD tables + QR code
+### 1. Model
 
-**Ưu điểm:**
-- ✅ Tái sử dụng trong nhiều controllers
-- ✅ Dễ test
-- ✅ Centralized database logic
+Models encapsulate database queries and data transformations.
 
-### 2. **Controller** (Tầng Logic)
-Xử lý business logic và validation:
-- `staffController.js`: Quản lý staff operations
-- `menuItemController.js`: Quản lý menu items operations
-- `tableController.js`: Quản lý table operations
+Examples:
+- `src/models/billModel.js` handles bill retrieval, totals, and closing logic.
+- `src/models/menuItemModel.js` handles menu CRUD operations.
+- `src/models/tableModel.js` handles table CRUD and QR code updates.
 
-**Ưu điểm:**
-- ✅ Xử lý input validation
-- ✅ Orchestration giữa models
-- ✅ Consistent error handling
+### 2. Controller
 
-### 3. **Routes** (Tầng API)
-Chỉ gọi controllers, không chứa logic:
+Controllers contain business logic, validation, and error handling.
+They call model functions and return structured responses.
+
+Examples:
+- `src/controllers/staffController.js`
+- `src/controllers/orderController.js`
+- `src/controllers/tableController.js`
+
+### 3. Route
+
+Routes are the API entry point. They:
+- parse request parameters
+- enforce authorization via `requireRole`
+- call corresponding controller functions
+- return the controller response
+
+Routes should not contain direct database logic.
+
+### 4. Utils
+
+Utilities support common behaviors such as:
+- authenticated fetch client (`src/utils/authFetch.js`)
+- standardized response formatting (`src/utils/response.js`)
+
+## Current API Routes
+
+### Admin / Staff
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/admin` | Get all staff users |
+| POST | `/api/admin` | Create a staff user |
+| PUT | `/api/admin?id={id}` | Update staff user |
+| DELETE | `/api/admin?id={id}` | Delete staff user |
+| PATCH | `/api/admin?id={id}` | Reset staff password |
+
+### Admin Stats
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/admin/stats` | Get admin dashboard stats |
+
+### Bills
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/bill` | Get open bills |
+| GET | `/api/bill?scope=all` | Get all bills with stats |
+| POST | `/api/bill` | Get bill detail by ID |
+| PATCH | `/api/bill?action=close` | Close bill by bill ID |
+| PATCH | `/api/bill?action=status` | Close bill by table ID |
+
+### Dashboard
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/dashboard` | Get dashboard metrics and recent orders |
+
+### Menu Items
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/menu_items` | Get all menu items |
+| POST | `/api/menu_items` | Create menu item |
+| PUT | `/api/menu_items?id={id}` | Update menu item |
+| DELETE | `/api/menu_items?id={id}` | Delete menu item |
+
+### Orders
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/orders` | Get pending orders |
+| POST | `/api/orders` | Create order |
+| PATCH | `/api/orders?id={id}` | Update order status |
+| DELETE | `/api/orders?id={id}` | Delete order |
+
+### Order Items
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| PUT | `/api/order_items?id={id}` | Update order item |
+| DELETE | `/api/order_items?id={id}` | Delete order item |
+
+### Tables
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/table` | Get all tables |
+| POST | `/api/table` | Create table |
+| PUT | `/api/table?id={id}` | Update table |
+| DELETE | `/api/table?id={id}` | Delete table |
+| PATCH | `/api/table?id={id}` | Update table or QR code |
+
+## Authorization Pattern
+
+Most API routes use `requireRole(req, allowedRoles)` from `src/lib/auth.js`.
+
+- `admin` only: admin creation, update, delete actions
+- `admin|staff`: bill actions, order actions, order item actions
+- public: menu listing and table listing
+
+## Request Flow
+
+```
+Client request
+  ↓
+Route handler (src/app/api/.../route.js)
+  ↓
+Controller (validation + business logic)
+  ↓
+Model (database queries)
+  ↓
+Response utils / direct response
+  ↓
+Client response
+```
+
+## Adding a New API Endpoint
+
+1. Add a model function in `src/models/yourModel.js`
+2. Add a controller function in `src/controllers/yourController.js`
+3. Add or update the route handler in `src/app/api/yourRoute/route.js`
+4. Protect the route with `requireRole` if needed
+
+Example:
+
 ```javascript
-// Before: Tất cả logic trong route
-export async function GET() {
-  // ... 20+ dòng database logic
-}
-
-// After: Route gọi controller
-import { getStaffController } from "@/controllers/staffController";
-export async function GET() {
-  return getStaffController();
-}
-```
-
-### 4. **Utils** (Hỗ trợ)
-- `response.js`: Standardized response format
-```javascript
-// Success response
-successResponse(data, message, status)
-
-// Error response
-errorResponse(message, status, error)
-```
-
-## 📝 Endpoints đã Refactor
-
-### Staff Management
-| Method | Endpoint | Controller |
-|--------|----------|-----------|
-| GET | `/api/admin/get-staff` | getStaffController |
-| POST | `/api/admin/create-staff` | createStaffController |
-| PUT | `/api/admin/update-staff?id=X` | updateStaffController |
-| DELETE | `/api/admin/delete-staff?id=X` | deleteStaffController |
-| POST | `/api/admin/reset-password-staff?id=X` | resetPasswordController |
-
-### Table Management
-| Method | Endpoint | Controller |
-|--------|----------|-----------|
-| GET | `/api/table/get-table` | getAllTablesController |
-| POST | `/api/table/create-table` | createTableController |
-| POST | `/api/table/update-table?id=X` | updateTableController |
-| DELETE | `/api/table/delete-table?id=X` | deleteTableController |
-| PATCH | `/api/table/update-table-qr-code?id=X` | updateTableQRCodeController |
-
-### Menu Items Management
-| Method | Endpoint | Controller |
-|--------|----------|-----------|
-| GET | `/api/menu_items/get-menu_items` | getAllMenuItemsController |
-| POST | `/api/menu_items/create-menu_items` | createMenuItemController |
-| PUT | `/api/menu_items/update-menu_items?id=X` | updateMenuItemController |
-| DELETE | `/api/menu_items/delete-menu_items?id=X` | deleteMenuItemController |
-
-## 🔄 Quy trình Yêu Cầu
-
-```
-Client Request
-    ↓
-Route Handler (app/api/xxx/route.js)
-    ↓
-Controller (xử lý validation + logic)
-    ↓
-Model (database operations)
-    ↓
-Response Utils (format response)
-    ↓
-Client Response
-```
-
-## 💡 Cách Thêm Endpoint Mới
-
-1. **Tạo Model function** trong `src/models/xxxModel.js`
-2. **Tạo Controller function** trong `src/controllers/xxxController.js`
-3. **Tạo Route handler** trong `src/app/api/xxx/route.js`
-
-**Ví dụ - Thêm API lấy bill:**
-
-```javascript
-// models/billModel.js
+// src/models/billModel.js
 export async function getBillById(id) {
   const { data, error } = await supabaseAdmin
     .from("bills")
@@ -150,7 +189,7 @@ export async function getBillById(id) {
   return data;
 }
 
-// controllers/billController.js
+// src/controllers/billController.js
 import * as BillModel from "@/models/billModel";
 import { successResponse, errorResponse } from "@/utils/response";
 
@@ -163,7 +202,7 @@ export async function getBillController(id) {
   }
 }
 
-// app/api/bill/get-bill/route.js
+// src/app/api/bill/route.js
 import { getBillController } from "@/controllers/billController";
 
 export async function GET(req) {
@@ -174,31 +213,31 @@ export async function GET(req) {
 }
 ```
 
-## 📋 API Response Format
+## API Response Standard
 
-Tất cả responses đều follow format này:
+Responses follow a shared format:
 
-```javascript
+```json
 // Success
 {
-  success: true,
-  data: {...},
-  message: "Success message"
+  "success": true,
+  "data": {...},
+  "message": "Success message"
 }
 
 // Error
 {
-  success: false,
-  message: "Error message",
-  error: "Detailed error info"
+  "success": false,
+  "message": "Error message",
+  "error": "Detailed error info"
 }
 ```
 
-## 🎯 Lợi Ích của MVC
+## Benefits of This Architecture
 
-✅ **Separation of Concerns**: Tách biệt rõ ràng giữa tầng  
-✅ **Reusability**: Tái sử dụng models trong nhiều controllers  
-✅ **Testability**: Dễ test từng tầng riêng lẻ  
-✅ **Maintainability**: Dễ bảo trì và mở rộng  
-✅ **Consistency**: Response format thống nhất  
-✅ **Scalability**: Dễ thêm features mới
+- **Separation of concerns**: each layer has one responsibility
+- **Reusability**: models are reusable across controllers
+- **Testability**: easier to test individual layers
+- **Maintainability**: easier to update and extend
+- **Consistency**: centralized response and auth patterns
+- **Scalability**: easy to add new resources and routes

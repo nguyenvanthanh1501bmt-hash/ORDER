@@ -3,8 +3,9 @@ import {
   getBillDetailController,
   closeBillController,
   closeBillByTableController,
-} from "@/controllers/billController";
-import { requireRole } from "@/lib/auth";
+  getAllBillsWithStatsController,
+} from "@/controllers/billController"
+import { requireRole } from "@/lib/auth"
 
 /**
  * Bills API Routes
@@ -15,10 +16,17 @@ import { requireRole } from "@/lib/auth";
  */
 
 export async function GET(req) {
-  const auth = await requireRole(req, ["admin", "staff"]);
-  if (auth.error) return auth.error;
+  const auth = await requireRole(req, ["admin", "staff"])
+  if (auth.error) return auth.error
 
-  return getOpenBillsController();
+  const { searchParams } = new URL(req.url)
+  const scope = searchParams.get("scope")
+
+  if (scope === "all") {
+    return getAllBillsWithStatsController()
+  }
+
+  return getOpenBillsController()
 }
 
 export async function POST(req) {

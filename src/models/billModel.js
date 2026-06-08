@@ -158,3 +158,75 @@ export async function closeBillByTable(tableId) {
 
   return closedBill;
 }
+
+function calcBillAmount(bill) {
+  if (bill.total_amount !== null && bill.total_amount !== undefined) {
+    return Number(bill.total_amount) || 0
+  }
+
+  return (bill.orders || [])
+    .flatMap((order) => order.order_items || [])
+    .reduce((sum, item) => {
+      const quantity = Number(item.quantity || 0)
+      const price = Number(item.unit_price ?? item.menu_items?.price ?? 0)
+      return sum + quantity * price
+    }, 0)
+}
+
+export async function getAllBillsWithStats() {
+  const { data, error } = await supabaseAdmin
+    .from("bills")
+    .select(`
+      id,
+      status,
+      table_id,
+      total_amount,
+      created_at,
+      closed_at,
+      tables (
+        id,
+        name
+      ),
+      orders (
+        id,
+        status,
+        created_at,
+        order_items (
+          id,
+          quantity,
+          unit_price,
+          menu_items (
+            name,
+            price
+          )
+        )
+      )
+    `)
+    .order("created_at", { ascending: false })
+
+  if (error) throw error
+
+  const bills = (data || []).map((bill) => ({
+    ...bill,
+    computed_amount: calcBillAmount(bill),
+    order_count: bill.orders?.length || 0,
+  }))
+
+  const stats = {
+    total_bills: bills.length,
+    open_bills: bills.filter((bill) => bill.status === "open").length,
+    closed_bills: bills.filter((bill) => bill.status === "closed").length,
+    closed_revenue: bills
+      .filter((bill) => bill.status === "closed")
+      .reduce((sum, bill) => sum + Number(bill.computed_amount || 0), 0),
+    all_bill_amount: bills.reduce(
+      (sum, bill) => sum + Number(bill.computed_amount || 0),
+      0
+    ),
+  }
+
+  return {
+    data: bills,
+    stats,
+  }
+}
