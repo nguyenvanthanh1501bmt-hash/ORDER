@@ -1,9 +1,13 @@
-"use client"
+'use client'
 
-import { createContext, useEffect, useState } from "react"
-import client from "@/api/client"
+import { createContext, useEffect, useMemo, useState } from 'react'
+import client from '@/api/client'
 
 const AuthContext = createContext(null)
+
+function isSameUser(a, b) {
+  return a?.id === b?.id && a?.email === b?.email
+}
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
@@ -13,38 +17,49 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     let mounted = true
 
-    const loadSession = async () => {
-      const { data, error } = await client.auth.getSession()
-
+    const applySession = (session) => {
       if (!mounted) return
 
-      if (error) {
-        console.error("Get session error:", error)
-      }
+      const nextUser = session?.user ?? null
 
-      setUser(data.session?.user || null)
-      setAccessToken(data.session?.access_token || null)
+      setUser((prev) => {
+        return isSameUser(prev, nextUser) ? prev : nextUser
+      })
+
+      setAccessToken(session?.access_token ?? null)
       setLoading(false)
     }
 
-    loadSession()
+    client.auth
+      .getSession()
+      .then(({ data }) => {
+        applySession(data.session)
+      })
+      .catch(() => {
+        if (mounted) setLoading(false)
+      })
 
-    const {
-      data: { subscription },
-    } = client.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null)
-      setAccessToken(session?.access_token || null)
-      setLoading(false)
+    const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
+      applySession(session)
     })
 
     return () => {
       mounted = false
-      subscription.unsubscribe()
+      listener.subscription.unsubscribe()
     }
   }, [])
 
+  const value = useMemo(
+    () => ({
+      user,
+      accessToken,
+      loading,
+    }),
+    [user, accessToken, loading]
+  )
+
   return (
-    <AuthContext.Provider value={{ user, accessToken, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,73 +1,74 @@
-"use client"
+'use client'
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import client from "@/api/client"
-import useAuth from "@/hooks/useAuth"
-import { authFetch } from "@/utils/authFetch"
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import client from '@/api/client'
+import useAuth from '@/hooks/useAuth'
 
-export default function useRoleRedirect(requiredRole, redirectTo = "/pages") {
-  const { user, accessToken, loading } = useAuth()
+export default function useRoleRedirect(requiredRole, redirectTo = '/pages') {
+  const { user, loading } = useAuth()
   const router = useRouter()
 
+  const roleKey = useMemo(() => {
+    const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
+
+    return roles
+      .map((role) => String(role).toLowerCase())
+      .join('|')
+  }, [requiredRole])
+
   const [checkingRole, setCheckingRole] = useState(true)
+  const [roleReady, setRoleReady] = useState(false)
 
   useEffect(() => {
+    if (loading) return
+
+    if (!user) {
+      setCheckingRole(false)
+      setRoleReady(false)
+      router.replace(redirectTo)
+      return
+    }
+
     let cancelled = false
 
-    const checkRole = async () => {
-      if (loading) return
+    const cacheKey = `role-ok:${user.id}:${roleKey}`
+    const cachedOk =
+      typeof window !== 'undefined' &&
+      sessionStorage.getItem(cacheKey) === '1'
 
-      if (!user || !accessToken) {
-        if (!cancelled) {
-          setCheckingRole(false)
-          router.replace(redirectTo)
-        }
+    if (cachedOk) {
+      setRoleReady(true)
+      setCheckingRole(false)
+    } else {
+      setCheckingRole(true)
+    }
 
+    async function checkRole() {
+      const allowedRoles = roleKey.split('|')
+
+      const { data, error } = await client
+        .from('staff')
+        .select('role')
+        .eq('user_id', user.id)
+        .single()
+
+      if (cancelled) return
+
+      const dbRole = data?.role?.toLowerCase()
+      const ok = !error && allowedRoles.includes(dbRole)
+
+      if (!ok) {
+        sessionStorage.removeItem(cacheKey)
+        setRoleReady(false)
+        setCheckingRole(false)
+        router.replace(redirectTo)
         return
       }
 
-      setCheckingRole(true)
-
-      try {
-        const res = await authFetch("/api/auth/me", {
-          token: accessToken,
-        })
-
-        const result = await res.json().catch(() => null)
-
-        if (cancelled) return
-
-        if (!res.ok || !result?.success) {
-          console.error("Role check error:", result)
-
-          if (res.status === 401) {
-            await client.auth.signOut()
-          }
-
-          setCheckingRole(false)
-          router.replace(redirectTo)
-          return
-        }
-
-        const userRole = result.staff?.role?.trim().toLowerCase()
-        const needRole = requiredRole?.trim().toLowerCase()
-
-        if (userRole !== needRole) {
-          setCheckingRole(false)
-          router.replace(redirectTo)
-          return
-        }
-
-        setCheckingRole(false)
-      } catch (err) {
-        console.error("Role check unexpected error:", err)
-
-        if (!cancelled) {
-          setCheckingRole(false)
-          router.replace(redirectTo)
-        }
-      }
+      sessionStorage.setItem(cacheKey, '1')
+      setRoleReady(true)
+      setCheckingRole(false)
     }
 
     checkRole()
@@ -75,11 +76,11 @@ export default function useRoleRedirect(requiredRole, redirectTo = "/pages") {
     return () => {
       cancelled = true
     }
-  }, [user, accessToken, loading, requiredRole, redirectTo, router])
+  }, [loading, user?.id, roleKey, redirectTo, router])
 
   return {
     user,
     loading,
-    checkingRole,
+    checkingRole: !roleReady && checkingRole,
   }
 }
