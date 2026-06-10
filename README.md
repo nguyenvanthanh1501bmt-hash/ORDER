@@ -39,6 +39,7 @@ Create a `.env.local` file at the project root and add the following values:
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+NEXT_PUBLIC_APP_URL=your-URL
 ```
 
 > `SUPABASE_SERVICE_ROLE_KEY` is required for server-side Supabase operations in `src/api/adminClient.js`.

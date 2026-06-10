@@ -16,6 +16,22 @@ function generateId() {
   )
 }
 
+function extractQrToken(value) {
+  if (!value) return null
+
+  try {
+    const url = new URL(value)
+    return url.searchParams.get('table')
+  } catch {
+    try {
+      const url = new URL(value, window.location.origin)
+      return url.searchParams.get('table')
+    } catch {
+      return String(value)
+    }
+  }
+}
+
 export default function MainMenuClient() {
   const [foodList, setFoodList] = useState([])
   const [selectedItems, setSelectedItems] = useState([])
@@ -41,19 +57,16 @@ export default function MainMenuClient() {
   useEffect(() => {
     if (!tableQRCode || tableList.length === 0) {
       console.log('QR CODE:', tableQRCode)
+      setTableId(null)
       return
     }
 
-    const matchedTable = tableList.find(table => {
-      if (String(table.id) === String(tableQRCode)) return true
-      if (String(table.qr_code_id) === String(tableQRCode)) return true
+    const scannedToken = String(tableQRCode)
 
-      try {
-        const url = new URL(table.qr_code_id)
-        return url.searchParams.get('table') === tableQRCode
-      } catch {
-        return false
-      }
+    const matchedTable = tableList.find(table => {
+      const tableToken = extractQrToken(table.qr_code_id)
+
+      return tableToken && String(tableToken) === scannedToken
     })
 
     console.log('QR:', tableQRCode)
@@ -85,7 +98,7 @@ export default function MainMenuClient() {
 
   const handleSelectItem = food => {
     if (!tableId) {
-      showAlert('Không tìm thấy bàn. Vui lòng quét lại QR.')
+      showAlert('Table not found. Please scan the QR again.')
       return
     }
 
@@ -147,7 +160,7 @@ export default function MainMenuClient() {
     setSelectedItems(prev =>
       prev.filter(item => item.orderItemId !== orderItemId)
     )
-    showAlert('Đã xoá món khỏi đơn')
+    showAlert('Removed item from order')
   }
 
   return (

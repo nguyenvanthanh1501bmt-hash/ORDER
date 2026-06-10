@@ -1,5 +1,48 @@
 import { supabaseAdmin } from "@/api/adminClient"
 
+function getAppBaseUrl() {
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "")
+
+  const baseUrl = appUrl.replace(/\/$/, "")
+
+  if (!baseUrl) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_APP_URL. Please set NEXT_PUBLIC_APP_URL in .env.local"
+    )
+  }
+
+  return baseUrl
+}
+
+function generateNewTableQRCode(tableId) {
+  const baseUrl = getAppBaseUrl()
+  const randomText = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  const token = `table-${tableId}-${randomText}`
+
+  return `${baseUrl}/?table=${encodeURIComponent(token)}`
+}
+
+async function refreshTableQRCode(tableId) {
+  if (!tableId) return null
+
+  const newQRCode = generateNewTableQRCode(tableId)
+
+  const { data, error } = await supabaseAdmin
+    .from("tables")
+    .update({ qr_code_id: newQRCode })
+    .eq("id", tableId)
+    .select("id, name, qr_code_id")
+    .single()
+
+  if (error) throw error
+
+  console.log("UPDATED TABLE QR:", data)
+
+  return data.qr_code_id
+}
+
 // Get all open bills
 export async function getOpenBills() {
   const { data, error } = await supabaseAdmin
@@ -154,6 +197,15 @@ export async function closeBill(billId) {
 
   if (updateError) throw updateError
 
+  if (closedBill?.table_id) {
+    const newQRCode = await refreshTableQRCode(closedBill.table_id)
+
+    return {
+      ...closedBill,
+      new_qr_code_id: newQRCode,
+    }
+  }
+
   return closedBill
 }
 
@@ -165,6 +217,7 @@ export async function closeBillByTable(tableId) {
       id,
       table_id,
       status,
+      total_amount,
       created_at,
       orders (
         id,
@@ -227,7 +280,12 @@ export async function closeBillByTable(tableId) {
 
   if (updateError) throw updateError
 
-  return closedBill
+  const newQRCode = await refreshTableQRCode(closedBill.table_id)
+
+  return {
+    ...closedBill,
+    new_qr_code_id: newQRCode,
+  }
 }
 
 export async function getAllBillsWithStats() {

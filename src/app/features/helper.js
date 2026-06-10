@@ -1,50 +1,70 @@
 // Format a timestamp into "DD/MM/YYYY HH:mm:ss"
 export function formatDate(timestamp) {
-  // Return placeholder if timestamp is missing
   if (!timestamp) return "-"
 
-  // Create Date object from timestamp
   const date = new Date(timestamp)
 
-  // Format date and time with leading zeros
-  return `${date.getDate().toString().padStart(2,'0')}/${
-          (date.getMonth()+1).toString().padStart(2,'0')}/${
-          date.getFullYear()} ${
-          date.getHours().toString().padStart(2,'0')}:${
-          date.getMinutes().toString().padStart(2,'0')}:${
-          date.getSeconds().toString().padStart(2,'0')}`
+  return `${date.getDate().toString().padStart(2, "0")}/${(
+    date.getMonth() + 1
+  )
+    .toString()
+    .padStart(2, "0")}/${date.getFullYear()} ${date
+    .getHours()
+    .toString()
+    .padStart(2, "0")}:${date
+    .getMinutes()
+    .toString()
+    .padStart(2, "0")}:${date
+    .getSeconds()
+    .toString()
+    .padStart(2, "0")}`
 }
 
 // Calculate extra price based on selected size option
 export function getSizeExtraPrice(option, sizeText) {
-  // Validate inputs
   if (!Array.isArray(option) || !sizeText) return 0
 
-  // Find index of selected size in option list
-  const index = option.findIndex(opt => opt === sizeText)
+  const index = option.findIndex((opt) => opt === sizeText)
 
-  // If size is not found, no extra charge
   if (index === -1) return 0
 
-  // Extra price increases by 5000 per size level
   return index * 5000
 }
 
 // Extract table QR code value from URL query string
 export function getTableQRCode(search) {
-  // Return null if query string is missing
   if (!search) return null
 
-  // Parse URL search parameters
   const params = new URLSearchParams(search)
 
-  // Return value of "table" parameter
-  return params.get('table')
+  return params.get("table")
 }
 
-export function generateTableQRCode(table) {
-  if (!table?.id) throw new Error('Invalid table')
+function getAppBaseUrl() {
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+    (typeof window !== "undefined" ? window.location.origin : "")
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL
-  return `${baseUrl}/?table=${table.id}`
+  const baseUrl = appUrl.replace(/\/$/, "")
+
+  if (!baseUrl) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_APP_URL. Please set NEXT_PUBLIC_APP_URL in .env.local or ensure window.location is available"
+    )
+  }
+
+  return baseUrl
+}
+
+// Generate new table QR.
+// QR is no longer only table.id, so old QR can be invalidated after checkout.
+export function generateTableQRCode(table) {
+  if (!table?.id) throw new Error("Invalid table")
+
+  const baseUrl = getAppBaseUrl()
+  const randomText = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  const token = `table-${table.id}-${randomText}`
+
+  return `${baseUrl}/?table=${encodeURIComponent(token)}`
 }
