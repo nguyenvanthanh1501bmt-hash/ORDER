@@ -3,11 +3,12 @@
 import { getTableList } from "@/app/features/Table/Table_list"
 import { getOpenBills } from "@/app/features/order/Get_Bill_For_Table"
 import { getBillDetail } from "@/app/features/order/Get_Bill_Detail"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import TableListUIForTableCheck from "@/app/features/order/TableListUIForTableCheck"
 import BillDetailModal from "@/app/features/order/Modal_Bill_Detail"
 import CustomAlert from "@/components/CustomAlert"
 import { authFetch } from "@/utils/authFetch"
+import client from "@/api/client"
 
 export default function TableCheck() {
   const [tableList, setTableList] = useState([])
@@ -20,8 +21,10 @@ export default function TableCheck() {
 
   const [alerttext, setalerttext] = useState(null)
 
-  const fetchData = async () => {
-    setLoading(true)
+  const fetchData = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true)
+    }
 
     try {
       const [tables, bills] = await Promise.all([
@@ -47,70 +50,116 @@ export default function TableCheck() {
         }
       })
 
-      console.log("TABLE LIST:", tables)
-      console.log("OPEN BILLS:", bills)
-      console.log("BILL MAP:", billMap)
-
       setOpenBills(billMap)
     } catch (err) {
       console.error("Error fetching table check data:", err)
       setTableList([])
       setOpenBills({})
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
-  }
+  }, [])
 
   const onViewBill = async (bill) => {
     if (!bill) return
 
-    const detail = await getBillDetail(bill.id)
+    try {
+      const detail = await getBillDetail(bill.id)
 
-    setSelectedBill(bill)
-    setBillDetail(detail)
-    setShowModal(true)
+      setSelectedBill(bill)
+      setBillDetail(detail)
+      setShowModal(true)
+    } catch (err) {
+      console.error("Error fetching bill detail:", err)
+      setalerttext("Cannot load bill detail")
+    }
   }
 
   const handlePayment = async (bill) => {
-  if (!bill?.id) return
+    if (!bill?.id) return
 
-  try {
-    const res = await authFetch("/api/bill?action=status", {
-      method: "PATCH",
-      body: JSON.stringify({
-        billId: bill.id,
-        id: bill.id,
-        tableId: bill.table_id,
-        status: "closed",
-      }),
-    })
+    try {
+      const res = await authFetch("/api/bill?action=status", {
+        method: "PATCH",
+        body: JSON.stringify({
+          billId: bill.id,
+          id: bill.id,
+          tableId: bill.table_id,
+          status: "closed",
+        }),
+      })
 
-    const result = await res.json().catch(() => ({
-      message: "Invalid server response",
-    }))
+      const result = await res.json().catch(() => ({
+        message: "Invalid server response",
+      }))
 
-    if (!res.ok) {
-      console.error("Close bill failed:", result)
-      setalerttext(result.message || "Cannot close bill")
-      return
+      if (!res.ok) {
+        console.error("Close bill failed:", result)
+        setalerttext(result.message || "Cannot close bill")
+        return
+      }
+
+      setShowModal(false)
+      setSelectedBill(null)
+      setBillDetail(null)
+
+      setalerttext("Close bill successfully, now table is available")
+
+      await fetchData(false)
+    } catch (err) {
+      console.error("System error during payment:", err)
+      setalerttext("System error during payment")
     }
-
-    setShowModal(false)
-    setSelectedBill(null)
-    setBillDetail(null)
-
-    setalerttext("Close bill successfully, now table is available")
-
-    await fetchData()
-  } catch (err) {
-    console.error("System error during payment:", err)
-    setalerttext("System error during payment")
   }
-}
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    let reloadTimer = null
+
+    const scheduleReload = () => {
+      clearTimeout(reloadTimer)
+
+      reloadTimer = setTimeout(() => {
+        fetchData(false)
+      }, 300)
+    }
+
+    fetchData(true)
+
+    const channel = client
+      .channel("table-check-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bills" },
+        scheduleReload
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        scheduleReload
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "order_items" },
+        scheduleReload
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tables" },
+        scheduleReload
+      )
+      .subscribe((status, err) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.error("Realtime error:", status, err)
+        }
+      })
+
+    return () => {
+      clearTimeout(reloadTimer)
+      client.removeChannel(channel)
+    }
+  }, [fetchData])
 
   return (
     <div className="p-6">

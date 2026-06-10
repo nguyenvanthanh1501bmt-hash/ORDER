@@ -22,7 +22,10 @@ export default function AdminHeader({ onToggleNav }) {
           <Menu />
         </button>
 
-        <h1 className="text-xl md:text-2xl font-semibold">
+        <h1
+          onClick={() => (window.location.href = "/pages/admin")}
+          className="text-xl md:text-2xl font-semibold cursor-pointer"
+        >
           Welcome, Admin!
         </h1>
       </div>
