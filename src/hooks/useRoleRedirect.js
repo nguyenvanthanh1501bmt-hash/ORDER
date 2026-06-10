@@ -1,45 +1,85 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import client from '@/api/client'
-import useAuth from '@/hooks/useAuth'
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import client from "@/api/client"
+import useAuth from "@/hooks/useAuth"
+import { authFetch } from "@/utils/authFetch"
 
-export default function useRoleRedirect(requiredRole, redirectTo = '/pages') {
-  const { user, loading } = useAuth()
+export default function useRoleRedirect(requiredRole, redirectTo = "/pages") {
+  const { user, accessToken, loading } = useAuth()
   const router = useRouter()
+
   const [checkingRole, setCheckingRole] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
+
     const checkRole = async () => {
-      if (!loading) {
-        if (!user) {
-          router.push(redirectTo)
-          return
+      if (loading) return
+
+      if (!user || !accessToken) {
+        if (!cancelled) {
+          setCheckingRole(false)
+          router.replace(redirectTo)
         }
 
-        try {
-          const { data, error } = await client
-            .from('staff')
-            .select('role')
-            .eq('email', user.email)
-            .single()
+        return
+      }
 
-          if (error || !data || data.role !== requiredRole) {
-            router.push(redirectTo)
-            return
+      setCheckingRole(true)
+
+      try {
+        const res = await authFetch("/api/auth/me", {
+          token: accessToken,
+        })
+
+        const result = await res.json().catch(() => null)
+
+        if (cancelled) return
+
+        if (!res.ok || !result?.success) {
+          console.error("Role check error:", result)
+
+          if (res.status === 401) {
+            await client.auth.signOut()
           }
 
           setCheckingRole(false)
-        } catch (err) {
-          console.error(err)
-          router.push(redirectTo)
+          router.replace(redirectTo)
+          return
+        }
+
+        const userRole = result.staff?.role?.trim().toLowerCase()
+        const needRole = requiredRole?.trim().toLowerCase()
+
+        if (userRole !== needRole) {
+          setCheckingRole(false)
+          router.replace(redirectTo)
+          return
+        }
+
+        setCheckingRole(false)
+      } catch (err) {
+        console.error("Role check unexpected error:", err)
+
+        if (!cancelled) {
+          setCheckingRole(false)
+          router.replace(redirectTo)
         }
       }
     }
 
     checkRole()
-  }, [user, loading, router, requiredRole, redirectTo])
 
-  return { user, loading, checkingRole }
+    return () => {
+      cancelled = true
+    }
+  }, [user, accessToken, loading, requiredRole, redirectTo, router])
+
+  return {
+    user,
+    loading,
+    checkingRole,
+  }
 }

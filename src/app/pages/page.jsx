@@ -1,59 +1,106 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import client from '@/api/client';
-import useAuth from '@/hooks/useAuth';
-import Auth from '@/components/auth/Auth';
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import client from "@/api/client"
+import useAuth from "@/hooks/useAuth"
+import Auth from "@/components/auth/Auth"
+import { authFetch } from "@/utils/authFetch"
 
 export default function CheckUser() {
-  // ==================== CHECK HOOK SESSION =====================
-  const { user, loading } = useAuth(); 
+  const { user, accessToken, loading } = useAuth()
+  const router = useRouter()
 
-  const router = useRouter();
-  const [checkingRole, setCheckingRole] = useState(true);
+  const [checkingRole, setCheckingRole] = useState(true)
+  const [message, setMessage] = useState("")
 
   useEffect(() => {
+    let cancelled = false
+
     const checkAccess = async () => {
-      if (!loading) {
-        if (!user) {
-          // not login setcheck fail
-          setCheckingRole(false);
-          return;
+      if (loading) return
+
+      if (!user || !accessToken) {
+        if (!cancelled) {
+          setCheckingRole(false)
         }
 
-        try {
-          // getting role from staff
-          const { data: staffData, error: staffError } = await client
-            .from('staff')
-            .select('role')
-            .eq('email', user.email)
-            .single();
+        return
+      }
 
-          if (staffError || !staffData) {
-            setCheckingRole(false);
-            return;
+      setCheckingRole(true)
+      setMessage("")
+
+      try {
+        const res = await authFetch("/api/auth/me", {
+          token: accessToken,
+        })
+
+        const result = await res.json().catch(() => null)
+
+        if (cancelled) return
+
+        if (!res.ok || !result?.success) {
+          console.error("Check user role error:", result)
+
+          if (res.status === 401) {
+            await client.auth.signOut()
           }
 
-          const role = staffData.role;
+          setMessage(result?.message || "Cannot check user role.")
+          setCheckingRole(false)
+          return
+        }
 
-          // redirect by role
-          if (role === 'admin') router.push('/pages/admin');
-          else if (role === 'staff') router.push('/pages/staff');
-          else setCheckingRole(false); // orther role are invalid
+        const role = result.staff?.role?.trim().toLowerCase()
 
-        } catch (err) {
-          console.error(err);
-          setCheckingRole(false);
+        if (role === "admin") {
+          router.replace("/pages/admin")
+          return
+        }
+
+        if (role === "staff") {
+          router.replace("/pages/staff")
+          return
+        }
+
+        await client.auth.signOut()
+        setMessage("Invalid user role. Please contact admin.")
+        setCheckingRole(false)
+      } catch (err) {
+        console.error("Check user role unexpected error:", err)
+
+        if (!cancelled) {
+          setMessage("Cannot connect to auth server.")
+          setCheckingRole(false)
         }
       }
-    };
+    }
 
-    checkAccess();
-  }, [user, loading, router]);
+    checkAccess()
 
-  if (loading || checkingRole) return <h1>Loading...</h1>;
+    return () => {
+      cancelled = true
+    }
+  }, [user, accessToken, loading, router])
 
-  // not login or role invalid -> redirect to signin form or page by role
-  return <Auth />;
+  if (loading || checkingRole) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <h1 className="text-lg font-semibold">Loading...</h1>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {message && (
+        <div className="mx-auto mt-6 max-w-sm rounded-md bg-red-50 px-4 py-3 text-center text-sm text-red-600">
+          {message}
+        </div>
+      )}
+
+      <Auth />
+    </>
+  )
 }

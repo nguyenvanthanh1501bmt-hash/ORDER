@@ -1,38 +1,53 @@
-'use client'
+"use client"
 
-import { createContext, useState, useEffect } from "react"
+import { createContext, useEffect, useState } from "react"
 import client from "@/api/client"
 
 const AuthContext = createContext(null)
 
 const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null)
-    const [accessToken, setAccessToken] = useState(null)
-    const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(null)
+  const [accessToken, setAccessToken] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        client.auth.getSession().then(({ data }) => {
-            setUser(data.session?.user || null)
-            setAccessToken(data.session?.access_token || null)
-            setLoading(false)
-        })
+  useEffect(() => {
+    let mounted = true
 
-        const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user || null)
-            setAccessToken(session?.access_token || null)
-            setLoading(false)
-        })
+    const loadSession = async () => {
+      const { data, error } = await client.auth.getSession()
 
-        return () => {
-            listener.subscription.unsubscribe()
-        }
-    }, [])
+      if (!mounted) return
 
-    return (
-        <AuthContext.Provider value={{ user, accessToken, loading }}>
-            {children}
-        </AuthContext.Provider>
-    )
+      if (error) {
+        console.error("Get session error:", error)
+      }
+
+      setUser(data.session?.user || null)
+      setAccessToken(data.session?.access_token || null)
+      setLoading(false)
+    }
+
+    loadSession()
+
+    const {
+      data: { subscription },
+    } = client.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null)
+      setAccessToken(session?.access_token || null)
+      setLoading(false)
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  return (
+    <AuthContext.Provider value={{ user, accessToken, loading }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export { AuthContext, AuthProvider }

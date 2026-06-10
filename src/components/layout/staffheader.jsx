@@ -42,26 +42,22 @@ export default function StaffHeader() {
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
-          href="/pages/staff/order"
+          href="/pages/staff"
           className="flex min-w-0 items-center gap-3"
         >
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
             <Coffee size={21} />
           </div>
 
-          <Link
-            href="/pages/staff"
-            className="hidden min-w-0 sm:block">
-              <div className="hidden min-w-0 sm:block">
-                <p className="truncate text-sm font-bold leading-5 text-slate-900">
-                  Restaurant POS
-                </p>
-                <p className="truncate text-xs text-slate-500">
-                  Staff workspace
-                </p>
-              </div>
-          </Link>
-          
+          <div className="hidden min-w-0 sm:block">
+            <p className="truncate text-sm font-bold leading-5 text-slate-900">
+              Restaurant POS
+            </p>
+
+            <p className="truncate text-xs text-slate-500">
+              Staff workspace
+            </p>
+          </div>
         </Link>
 
         <nav className="flex flex-1 justify-center">
@@ -85,7 +81,9 @@ export default function StaffHeader() {
                     size={18}
                     className={clsx(
                       "transition-colors",
-                      active ? "text-slate-900" : "text-slate-400 group-hover:text-slate-700"
+                      active
+                        ? "text-slate-900"
+                        : "text-slate-400 group-hover:text-slate-700"
                     )}
                   />
 

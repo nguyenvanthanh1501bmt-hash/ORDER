@@ -1,15 +1,28 @@
 import client from "@/api/client"
 
 export async function authFetch(url, options = {}) {
-    const { data } = await client.auth.getSession()
-    const token = data.session?.access_token
+  let token = options.token
 
-    return fetch(url, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-    })
+  if (!token) {
+    const { data, error } = await client.auth.getSession()
+
+    if (error) {
+      console.error("authFetch getSession error:", error)
+    }
+
+    token = data.session?.access_token
+  }
+
+  const headers = {
+    ...(options.body ? { "Content-Type": "application/json" } : {}),
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+
+  const { token: _token, ...fetchOptions } = options
+
+  return fetch(url, {
+    ...fetchOptions,
+    headers,
+  })
 }

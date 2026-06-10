@@ -1,62 +1,106 @@
-import React, { useState } from "react";
-import client from "@/api/client";
+"use client"
+
+import React, { useState } from "react"
+import client from "@/api/client"
 
 const Signup = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
 
-    // Kiểm tra confirm password
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
+    if (loading) return
+
+    setError(null)
+    setSuccess(null)
+
+    const cleanName = name.trim()
+    const cleanEmail = email.trim()
+
+    if (!cleanName) {
+      setError("Name is required")
+      return
     }
 
-    setLoading(true);
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters")
+      return
+    }
+
+    setLoading(true)
 
     try {
-      // Gọi API signup
-      const { data, error } = await client.auth.signUp({
-        email,
+      const { error: signupError } = await client.auth.signUp({
+        email: cleanEmail,
         password,
-    });
+        options: {
+          data: {
+            name: cleanName,
+          },
+        },
+      })
 
-      if (error) {
-        setError(error.message || "Signup failed");
-        console.error(error);
-      } else {
-        console.log("Signup success:", data);
-        // Có thể redirect sang login hoặc lưu token
-        if (!error) {
-            const { data: staffData, error: staffError } = await client
-                .from("staff")
-                .insert([
-                { email: email.trim(), role: "staff", name: name.trim() }
-                ]);
-
-            if (staffError) {
-                console.error("Cannot insert staff:", staffError);
-            }
-        }
+      if (signupError) {
+        setError(signupError.message || "Signup failed")
+        return
       }
+
+      const { error: staffError } = await client
+        .from("staff")
+        .insert([
+          {
+            email: cleanEmail,
+            role: "staff",
+            name: cleanName,
+          },
+        ])
+
+      if (staffError) {
+        console.error("Cannot insert staff:", staffError)
+        setError("Signup created, but cannot create staff profile. Please contact admin.")
+        return
+      }
+
+      setName("")
+      setEmail("")
+      setPassword("")
+      setConfirmPassword("")
+      setSuccess("Signup successful. You can login now.")
     } catch (err) {
-      console.error(err);
-      setError("Something went wrong");
+      console.error(err)
+      setError("Something went wrong")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <h2 className="text-2xl font-semibold text-center">Sign Up</h2>
+
       {error && <p className="text-red-500 text-center">{error}</p>}
+      {success && <p className="text-green-600 text-center">{success}</p>}
+
+      <input
+        type="text"
+        placeholder="Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        required
+      />
+
       <input
         type="email"
         placeholder="Email"
@@ -65,6 +109,7 @@ const Signup = () => {
         className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         required
       />
+
       <input
         type="password"
         placeholder="Password"
@@ -73,6 +118,7 @@ const Signup = () => {
         className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         required
       />
+
       <input
         type="password"
         placeholder="Confirm Password"
@@ -81,6 +127,7 @@ const Signup = () => {
         className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         required
       />
+
       <button
         type="submit"
         disabled={loading}
@@ -89,7 +136,7 @@ const Signup = () => {
         {loading ? "Signing up..." : "Sign Up"}
       </button>
     </form>
-  );
-};
+  )
+}
 
-export default Signup;
+export default Signup
