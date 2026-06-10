@@ -1,8 +1,58 @@
 import { supabaseAdmin } from "@/api/adminClient";
 import { getSizeExtraPrice } from "@/app/features/helper";
 
+function extractQrToken(value) {
+  if (!value) return null;
+
+  const text = String(value).trim();
+
+  try {
+    const url = new URL(text);
+    return url.searchParams.get("table") || text;
+  } catch {
+    try {
+      const url = new URL(text, "http://localhost");
+      return url.searchParams.get("table") || text;
+    } catch {
+      return text;
+    }
+  }
+}
+
+function createHttpError(message, status) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
 // Create new order with items
-export async function createOrder({ table_id, items }) {
+export async function createOrder({ table_id, qr_token, items }) {
+  // STEP 0: Validate current QR before creating order.
+  // This prevents old tabs / old QR links from ordering after checkout.
+  const { data: table, error: tableError } = await supabaseAdmin
+    .from("tables")
+    .select("id, qr_code_id")
+    .eq("id", table_id)
+    .single();
+
+  if (tableError || !table) {
+    throw createHttpError("Table not found", 404);
+  }
+
+  const currentQrToken = extractQrToken(table.qr_code_id);
+  const requestQrToken = extractQrToken(qr_token);
+
+  if (
+    !currentQrToken ||
+    !requestQrToken ||
+    String(currentQrToken) !== String(requestQrToken)
+  ) {
+    throw createHttpError(
+      "QR code expired. Please scan the new QR again.",
+      403
+    );
+  }
+
   // STEP 1: Find or create open bill
   let { data: bill } = await supabaseAdmin
     .from("bills")
@@ -35,6 +85,7 @@ export async function createOrder({ table_id, items }) {
 
   // STEP 3: Load menu items data
   const menuIds = items.map((i) => i.menu_item_id);
+
   const { data: menus, error: menuErr } = await supabaseAdmin
     .from("menu_items")
     .select("id, name, price")
@@ -51,32 +102,40 @@ export async function createOrder({ table_id, items }) {
 
     const sizeText = item.selected_options?.size;
     const sizeExtra = getSizeExtraPrice(item.option, sizeText);
-    const finalUnitPrice = menu.price + sizeExtra;
-    const itemTotal = finalUnitPrice * item.quantity;
+    const finalUnitPrice = Number(menu.price || 0) + Number(sizeExtra || 0);
+    const itemTotal = finalUnitPrice * Number(item.quantity || 1);
 
     totalAdded += itemTotal;
 
-    await supabaseAdmin.from("order_items").insert({
-      order_id: order.id,
-      menu_item_id: menu.id,
-      base_item_name: menu.name,
-      unit_price: finalUnitPrice,
-      quantity: item.quantity,
-      note: item.note || null,
-      selected_options: {
-        ...item.selected_options,
-        size_extra: sizeExtra,
-      },
-    });
+    const { error: itemInsertError } = await supabaseAdmin
+      .from("order_items")
+      .insert({
+        order_id: order.id,
+        menu_item_id: menu.id,
+        base_item_name: menu.name,
+        unit_price: finalUnitPrice,
+        quantity: item.quantity,
+        note: item.note || null,
+        selected_options: {
+          ...item.selected_options,
+          size_extra: sizeExtra,
+        },
+      });
+
+    if (itemInsertError) throw itemInsertError;
   }
 
   // STEP 5: Update bill total
-  await supabaseAdmin
+  const currentTotal = Number(bill.total_amount || 0);
+
+  const { error: billUpdateError } = await supabaseAdmin
     .from("bills")
     .update({
-      total_amount: bill.total_amount + totalAdded,
+      total_amount: currentTotal + totalAdded,
     })
     .eq("id", bill.id);
+
+  if (billUpdateError) throw billUpdateError;
 
   return {
     bill_id: bill.id,

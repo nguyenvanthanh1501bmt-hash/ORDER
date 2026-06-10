@@ -4,21 +4,30 @@ import { supabaseAdmin } from "@/api/adminClient";
 export async function getAllTables() {
   const { data, error } = await supabaseAdmin
     .from("tables")
-    .select("id, qr_code_id, name, created_at");
+    .select("id, qr_code_id, name, created_at")
+    .order("created_at", { ascending: true });
 
-  if (error) throw error;
-  return data;
+  if (error) {
+    console.error("Get all tables error:", error);
+    throw error;
+  }
+
+  return data || [];
 }
 
 // Get table by ID
 export async function getTableById(id) {
   const { data, error } = await supabaseAdmin
     .from("tables")
-    .select("*")
+    .select("id, qr_code_id, name, created_at")
     .eq("id", id)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Get table by ID error:", error);
+    throw error;
+  }
+
   return data;
 }
 
@@ -27,10 +36,14 @@ export async function createTable(tableData) {
   const { data, error } = await supabaseAdmin
     .from("tables")
     .insert([tableData])
-    .select()
+    .select("id, qr_code_id, name, created_at")
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Create table error:", error);
+    throw error;
+  }
+
   return data;
 }
 
@@ -40,10 +53,14 @@ export async function updateTable(id, updates) {
     .from("tables")
     .update(updates)
     .eq("id", id)
-    .select()
+    .select("id, qr_code_id, name, created_at")
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Update table error:", error);
+    throw error;
+  }
+
   return data;
 }
 
@@ -54,7 +71,11 @@ export async function deleteTable(id) {
     .delete()
     .eq("id", id);
 
-  if (error) throw error;
+  if (error) {
+    console.error("Delete table error:", error);
+    throw error;
+  }
+
   return { message: "Table deleted successfully" };
 }
 
@@ -62,11 +83,17 @@ export async function deleteTable(id) {
 export async function updateTableQRCode(id, qrCodeId) {
   const { data, error } = await supabaseAdmin
     .from("tables")
-    .update({ qr_code_id: qrCodeId })
+    .update({
+      qr_code_id: qrCodeId,
+    })
     .eq("id", id)
-    .select()
+    .select("id, qr_code_id, name, created_at")
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Update table QR code error:", error);
+    throw error;
+  }
+
   return data;
 }

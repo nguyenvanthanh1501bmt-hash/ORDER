@@ -1,6 +1,7 @@
-export async function addOrder({ tableId, menuItems }) {
+export async function addOrder({ tableId, qrToken, menuItems }) {
   const payload = {
     table_id: tableId,
+    qr_token: qrToken,
     items: menuItems.map(item => ({
       menu_item_id: item.productId,
       quantity: item.quantity,
@@ -9,20 +10,21 @@ export async function addOrder({ tableId, menuItems }) {
         ? { size: item.selectedSize }
         : {},
       option: item.options || null,
-    }))
+    })),
   }
 
   const res = await fetch('/api/orders', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload), 
+    cache: 'no-store',
+    body: JSON.stringify(payload),
   })
 
+  const response = await res.json().catch(() => null)
+
   if (!res.ok) {
-    throw new Error('Failed to add order')
+    throw new Error(response?.message || 'Failed to add order')
   }
 
-  const response = await res.json()
-  // Handle new response format: { success, data, message }
   return response.data || response
 }

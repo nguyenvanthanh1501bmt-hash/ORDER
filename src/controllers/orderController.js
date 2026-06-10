@@ -4,20 +4,34 @@ import { successResponse, errorResponse } from "@/utils/response";
 // Create order
 export async function createOrderController(req) {
   try {
-    const { table_id, items } = await req.json();
+    const { table_id, qr_token, items } = await req.json();
 
-    // Validation
-    if (!table_id || !items || !Array.isArray(items) || items.length === 0) {
+    if (
+      !table_id ||
+      !qr_token ||
+      !items ||
+      !Array.isArray(items) ||
+      items.length === 0
+    ) {
       return errorResponse(
-        "Missing required fields: table_id, items (non-empty array)",
+        "Missing required fields: table_id, qr_token, items (non-empty array)",
         400
       );
     }
 
-    const result = await OrderModel.createOrder({ table_id, items });
+    const result = await OrderModel.createOrder({
+      table_id,
+      qr_token,
+      items,
+    });
+
     return successResponse(result, "Order created successfully", 201);
   } catch (error) {
-    return errorResponse("Failed to create order", 500, error);
+    return errorResponse(
+      error.message || "Failed to create order",
+      error.status || 500,
+      error
+    );
   }
 }
 

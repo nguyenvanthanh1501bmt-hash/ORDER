@@ -13,7 +13,6 @@ import {
 import { addOrder } from './CallingAddorderAPI'
 import CustomAlert from '@/components/CustomAlert'
 
-// Format price to Vietnamese currency style.
 function formatPrice(price) {
   const value = Number(price)
 
@@ -31,11 +30,11 @@ export default function OrderPreview({
   onDeleteItem,
   onClearItem,
   tableId,
+  qrToken,
 }) {
   const [alertText, setAlertText] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // Calculate order total.
   const total = useMemo(() => {
     return items.reduce(
       (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
@@ -43,18 +42,21 @@ export default function OrderPreview({
     )
   }, [items])
 
-  // Show temporary alert.
-  const showAlert = (text) => {
+  const showAlert = text => {
     setAlertText(text)
     setTimeout(() => setAlertText(''), 2000)
   }
 
-  // Submit current order to API.
   const handlesubmitOrder = async () => {
     if (submitting) return
 
     if (!tableId) {
       showAlert('Không tìm thấy bàn. Vui lòng quét lại QR.')
+      return
+    }
+
+    if (!qrToken) {
+      showAlert('QR không hợp lệ. Vui lòng quét lại QR.')
       return
     }
 
@@ -68,6 +70,7 @@ export default function OrderPreview({
 
       await addOrder({
         tableId,
+        qrToken,
         menuItems: items,
       })
 
@@ -75,7 +78,7 @@ export default function OrderPreview({
       showAlert('Order submitted successfully')
     } catch (error) {
       console.error('Failed to submit order:', error)
-      showAlert('Failed to submit order')
+      showAlert(error.message || 'Failed to submit order')
     } finally {
       setSubmitting(false)
     }
@@ -83,7 +86,6 @@ export default function OrderPreview({
 
   return (
     <aside className="flex h-full min-h-[520px] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-950/5">
-      {/* Header */}
       <div className="border-b border-slate-100 bg-slate-950 px-5 py-5 text-white sm:px-6">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -107,7 +109,6 @@ export default function OrderPreview({
         </div>
       </div>
 
-      {/* Item list */}
       <div className="flex-1 overflow-y-auto bg-slate-50/70 px-3 py-4 sm:px-4">
         {items.length === 0 ? (
           <div className="flex h-full min-h-80 flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-400 select-none">
@@ -166,7 +167,6 @@ export default function OrderPreview({
                   </div>
 
                   <div className="mt-4 flex items-center justify-between gap-3">
-                    {/* Quantity control */}
                     <div className="inline-flex items-center rounded-2xl border border-slate-200 bg-slate-50 p-1">
                       <button
                         type="button"
@@ -212,7 +212,6 @@ export default function OrderPreview({
                     </div>
                   </div>
 
-                  {/* Kitchen note */}
                   <div className="mt-4">
                     <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-500">
                       <StickyNote size={13} />
@@ -224,7 +223,7 @@ export default function OrderPreview({
                       className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-4 focus:ring-slate-100"
                       placeholder="Less sugar, no ice, extra spicy..."
                       value={item.note || ''}
-                      onChange={(event) =>
+                      onChange={event =>
                         onUpdateNote?.(item.orderItemId, event.target.value)
                       }
                     />
@@ -236,7 +235,6 @@ export default function OrderPreview({
         )}
       </div>
 
-      {/* Footer */}
       <div className="border-t border-slate-200 bg-white p-4 sm:p-5">
         <div className="mb-4 rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-200">
           <div className="flex items-center justify-between gap-3">
@@ -256,13 +254,13 @@ export default function OrderPreview({
 
         <button
           type="button"
-          disabled={items.length === 0 || !tableId || submitting}
+          disabled={items.length === 0 || !tableId || !qrToken || submitting}
           onClick={handlesubmitOrder}
           className={`
             inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5
             text-sm font-extrabold transition
             ${
-              items.length === 0 || !tableId || submitting
+              items.length === 0 || !tableId || !qrToken || submitting
                 ? 'cursor-not-allowed bg-slate-200 text-slate-500'
                 : 'bg-slate-950 text-white shadow-lg shadow-slate-950/10 hover:bg-slate-800 active:scale-[0.99]'
             }

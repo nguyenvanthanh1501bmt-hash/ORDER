@@ -19,15 +19,22 @@ function generateId() {
 function extractQrToken(value) {
   if (!value) return null
 
+  const text = String(value).trim()
+
   try {
-    const url = new URL(value)
-    return url.searchParams.get('table')
+    const url = new URL(text)
+    return url.searchParams.get('table') || text
   } catch {
     try {
-      const url = new URL(value, window.location.origin)
-      return url.searchParams.get('table')
+      const base =
+        typeof window !== 'undefined'
+          ? window.location.origin
+          : 'http://localhost'
+
+      const url = new URL(text, base)
+      return url.searchParams.get('table') || text
     } catch {
-      return String(value)
+      return text
     }
   }
 }
@@ -45,13 +52,34 @@ export default function MainMenuClient() {
   const tableQRCode = searchParams.get('table')
 
   useEffect(() => {
+    let cancelled = false
+
     const fetchTableList = async () => {
       const res = await getTableList()
-      setTableList(res || [])
-      console.log('TABLE LIST:', res)
+
+      if (!cancelled) {
+        setTableList(res || [])
+        console.log('TABLE LIST:', res)
+      }
     }
 
     fetchTableList()
+
+    const timer = setInterval(fetchTableList, 5000)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchTableList()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   useEffect(() => {
@@ -61,12 +89,11 @@ export default function MainMenuClient() {
       return
     }
 
-    const scannedToken = String(tableQRCode)
+    const scannedToken = extractQrToken(tableQRCode)
 
     const matchedTable = tableList.find(table => {
       const tableToken = extractQrToken(table.qr_code_id)
-
-      return tableToken && String(tableToken) === scannedToken
+      return tableToken && String(tableToken) === String(scannedToken)
     })
 
     console.log('QR:', tableQRCode)
@@ -179,6 +206,7 @@ export default function MainMenuClient() {
           <OrderPreview
             items={selectedItems}
             tableId={tableId}
+            qrToken={tableQRCode}
             onUpdateNote={handleUpdateItemNote}
             onUpdateQuantity={handleUpdateItemQuantity}
             onDeleteItem={handleDeleteItem}
@@ -218,6 +246,7 @@ export default function MainMenuClient() {
               <OrderPreview
                 items={selectedItems}
                 tableId={tableId}
+                qrToken={tableQRCode}
                 onUpdateNote={handleUpdateItemNote}
                 onUpdateQuantity={handleUpdateItemQuantity}
                 onDeleteItem={handleDeleteItem}
