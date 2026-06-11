@@ -3,12 +3,12 @@
 import { getTableList } from "@/app/features/Table/Table_list"
 import { getOpenBills } from "@/app/features/order/Get_Bill_For_Table"
 import { getBillDetail } from "@/app/features/order/Get_Bill_Detail"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import TableListUIForTableCheck from "@/app/features/order/TableListUIForTableCheck"
 import BillDetailModal from "@/app/features/order/Modal_Bill_Detail"
 import CustomAlert from "@/components/CustomAlert"
 import { authFetch } from "@/utils/authFetch"
-import client from "@/api/client"
+import useOrderRealTime from "@/hooks/useOrderRealTime"
 
 export default function TableCheck() {
   const [tableList, setTableList] = useState([])
@@ -22,7 +22,6 @@ export default function TableCheck() {
 
   const [alerttext, setalerttext] = useState(null)
   const [errorText, setErrorText] = useState("")
-  const [realtimeStatus, setRealtimeStatus] = useState("CONNECTING")
   const [lastUpdated, setLastUpdated] = useState(null)
 
   const getBillByTable = useCallback((table) => {
@@ -94,6 +93,15 @@ export default function TableCheck() {
     }
   }, [])
 
+  const {
+    realtimeStatus,
+    isRealtimeConnected,
+  } = useOrderRealTime(
+    fetchData,
+    setErrorText,
+    "table-check-realtime"
+  )
+
   const onViewBill = async (bill) => {
     if (!bill) return
 
@@ -145,58 +153,6 @@ export default function TableCheck() {
       setalerttext("System error during payment")
     }
   }
-
-  useEffect(() => {
-    let reloadTimer = null
-
-    const scheduleReload = () => {
-      clearTimeout(reloadTimer)
-
-      reloadTimer = setTimeout(() => {
-        fetchData(false)
-      }, 300)
-    }
-
-    fetchData(true)
-
-    const channel = client
-      .channel("table-check-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bills" },
-        scheduleReload
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
-        scheduleReload
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "order_items" },
-        scheduleReload
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tables" },
-        scheduleReload
-      )
-      .subscribe((status, err) => {
-        setRealtimeStatus(status)
-
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          console.error("Realtime error:", status, err)
-          setErrorText("Realtime connection error.")
-        }
-      })
-
-    return () => {
-      clearTimeout(reloadTimer)
-      client.removeChannel(channel)
-    }
-  }, [fetchData])
-
-  const isRealtimeConnected = realtimeStatus === "SUBSCRIBED"
 
   if (loading) {
     return (

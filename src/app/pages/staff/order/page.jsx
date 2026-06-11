@@ -1,17 +1,16 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { getOrdersAvailable } from '@/app/features/order/OrderAvailable'
 import OrderAvailableUI from '@/app/features/order/OrderAvailableUI'
-import { authFetch } from '@/utils/authFetch'
-import client from '@/api/client'
+import useOrderAction from '@/hooks/useOrderAction'
+import useOrderRealTime from '@/hooks/useOrderRealTime'
 
-export default function TableCheck() {
+export default function OrderPage() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [expandedOrders, setExpandedOrders] = useState(new Set())
-  const [realtimeStatus, setRealtimeStatus] = useState('CONNECTING')
   const [lastUpdated, setLastUpdated] = useState(null)
   const [errorText, setErrorText] = useState('')
 
@@ -20,14 +19,14 @@ export default function TableCheck() {
       order => order.status === 'pending_staff_approval'
     ).length
 
-    const accepted = orders.filter(
-      order => order.status === 'accepted'
+    const readyToServe = orders.filter(
+      order => order.status === 'ready_to_serve'
     ).length
 
     return {
       total: orders.length,
       pending,
-      accepted,
+      readyToServe,
     }
   }, [orders])
 
@@ -42,10 +41,13 @@ export default function TableCheck() {
       }
 
       const data = await getOrdersAvailable()
-      
-      setOrders(data.filter(order => ['pending_staff_approval', 'ready_to_serve'].includes(order.status)))
 
-      //setOrders(data || [])
+      setOrders(
+        data.filter(order =>
+          ['pending_staff_approval', 'ready_to_serve'].includes(order.status)
+        )
+      )
+
       setLastUpdated(new Date())
     } catch (err) {
       console.error('Error fetching orders:', err)
@@ -56,56 +58,26 @@ export default function TableCheck() {
     }
   }, [])
 
-  useEffect(() => {
-    let reloadTimer = null
+  const {
+    handleApprove,
+    handleReject,
+    handleDone,
+    loading: actionLoading,
+  } = useOrderAction(
+    fetchOrders,
+    setOrders,
+    setExpandedOrders,
+    setErrorText
+  )
 
-    const scheduleReload = () => {
-      clearTimeout(reloadTimer)
-
-      reloadTimer = setTimeout(() => {
-        fetchOrders(false)
-      }, 500)
-    }
-
-    fetchOrders(true)
-
-    const channel = client
-      .channel('staff-orders-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
-        () => {
-          scheduleReload()
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'order_items' },
-        () => {
-          scheduleReload()
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'bills' },
-        () => {
-          scheduleReload()
-        }
-      )
-      .subscribe((status, err) => {
-        setRealtimeStatus(status)
-
-        if (err) {
-          console.error('Realtime error:', err)
-          setErrorText('Realtime connection error.')
-        }
-      })
-
-    return () => {
-      clearTimeout(reloadTimer)
-      client.removeChannel(channel)
-    }
-  }, [fetchOrders])
+  const {
+    realtimeStatus,
+    isRealtimeConnected,
+  } = useOrderRealTime(
+    fetchOrders,
+    setErrorText,
+    'staff-orders-realtime'
+  )
 
   const toggleOrder = (orderId) => {
     setExpandedOrders(prev => {
@@ -114,96 +86,6 @@ export default function TableCheck() {
       return next
     })
   }
-
-  const handleApprove = async (orderId) => {
-    try {
-      const res = await authFetch(`/api/orders?id=${orderId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          status: 'accepted',
-        }),
-      })
-
-      const data = await res.json().catch(() => ({
-        message: 'Invalid server response',
-      }))
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Approve failed')
-      }
-
-      //move accepted order to chef page
-      setOrders(prev => prev.filter(order => order.id !== orderId))
-
-      setExpandedOrders(prev => {
-        const next = new Set(prev)
-        next.delete(orderId)
-        return next
-      })
-    } catch (err) {
-      console.error(err)
-      setErrorText(err.message || 'Approve failed')
-    }
-  }
-
-  const handleReject = async (orderId) => {
-    try {
-      const res = await authFetch(`/api/orders?id=${orderId}`, {
-        method: 'DELETE',
-      })
-
-      const data = await res.json().catch(() => ({
-        message: 'Invalid server response',
-      }))
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Reject failed')
-      }
-
-      await fetchOrders(false)
-
-      setExpandedOrders(prev => {
-        const next = new Set(prev)
-        next.delete(orderId)
-        return next
-      })
-    } catch (err) {
-      console.error(err)
-      setErrorText(err.message || 'Reject failed')
-    }
-  }
-
-  const handleDone = async (orderId) => {
-    try {
-      const res = await authFetch(`/api/orders?id=${orderId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          status: 'served',
-        }),
-      })
-
-      const data = await res.json().catch(() => ({
-        message: 'Invalid server response',
-      }))
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Complete failed')
-      }
-
-      await fetchOrders(false)
-
-      setExpandedOrders(prev => {
-        const next = new Set(prev)
-        next.delete(orderId)
-        return next
-      })
-    } catch (err) {
-      console.error(err)
-      setErrorText(err.message || 'Complete failed')
-    }
-  }
-
-  const isRealtimeConnected = realtimeStatus === 'SUBSCRIBED'
 
   if (loading) {
     return (
@@ -326,10 +208,10 @@ export default function TableCheck() {
 
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
               <p className="text-sm font-medium text-emerald-700">
-                Accepted
+                Ready to serve
               </p>
               <p className="mt-2 text-3xl font-bold text-emerald-900">
-                {orderStats.accepted}
+                {orderStats.readyToServe}
               </p>
             </div>
           </div>
@@ -390,6 +272,7 @@ export default function TableCheck() {
               onApprove={handleApprove}
               onReject={handleReject}
               onDone={handleDone}
+              actionLoading={actionLoading}
             />
           )}
         </section>

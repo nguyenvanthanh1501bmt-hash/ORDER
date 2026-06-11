@@ -21,6 +21,7 @@ export default function StaffHeader() {
   const pathname = usePathname()
 
   const [pendingCount, setPendingCount] = useState(0)
+  const [chefCount, setChefCount] = useState(0)
   const [notification, setNotification] = useState(null)
   const [realtimeStatus, setRealtimeStatus] = useState('CONNECTING')
 
@@ -34,34 +35,48 @@ export default function StaffHeader() {
   const isActive = (menuPath) =>
     pathname === menuPath || pathname.startsWith(menuPath + '/')
 
-  const fetchPendingCount = useCallback(async () => {
+  const fetchHeaderCount= useCallback(async () => {
     try {
       const orders = await getOrdersAvailable()
 
-      const count = (orders || []).filter(
-        order => order.status === 'pending_staff_approval'
+      const pending = (orders || []).filter(
+        order => order.status === 'pending_staff_approval' || order.status === 'ready_to_serve'
       ).length
 
-      setPendingCount(count)
+      const chef = (orders || []).filter(
+        order => order.status === 'accepted'
+      ).length
+
+      setPendingCount(pending)
+      setChefCount(chef)
+
     } catch (error) {
-      console.error('Failed to fetch pending order count:', error)
+      console.error('Failed to fetch header counts:', error)
     }
   }, [])
 
   const showNewOrderNotification = useCallback((payload) => {
     const orderId = payload?.new?.id
     const status = payload?.new?.status
+    const eventType = payload?.eventType
 
-    if (status && status !== 'pending_staff_approval') {
-      return
+    if (eventType === 'INSERT' && status === 'pending_staff_approval') {
+      setNotification({
+        title: 'New order received',
+        message: orderId
+          ? `Order #${orderId} is waiting for approval.`
+          : 'A customer has placed a new order.',
+      })
     }
 
-    setNotification({
-      title: 'New order received',
-      message: orderId
-        ? `Order #${orderId} is waiting for approval.`
-        : 'A customer has placed a new order.',
-    })
+    if (eventType === 'UPDATE' && status === 'accepted') {
+      setNotification({
+        title: 'Order sent to kitchen',
+        message: orderId
+          ? `Order #${orderId} is ready for chef to prepare.`
+          : 'An order is ready for chef to prepare.',
+      })  
+    }
 
     if (notificationTimerRef.current) {
       clearTimeout(notificationTimerRef.current)
@@ -79,11 +94,11 @@ export default function StaffHeader() {
       clearTimeout(reloadTimer)
 
       reloadTimer = setTimeout(() => {
-        fetchPendingCount()
+        fetchHeaderCount()
       }, 400)
     }
 
-    fetchPendingCount()
+    fetchHeaderCount()
 
     const channel = client
       .channel('staff-header-orders-realtime')
@@ -129,7 +144,7 @@ export default function StaffHeader() {
 
       client.removeChannel(channel)
     }
-  }, [fetchPendingCount, showNewOrderNotification])
+  }, [fetchHeaderCount, showNewOrderNotification])
 
   const isRealtimeConnected = realtimeStatus === 'SUBSCRIBED'
 
@@ -146,7 +161,7 @@ export default function StaffHeader() {
       name: "Chef-cooking",
       icon: UtensilsCrossed,
       path: "/pages/staff/Chef",
-      badge: 0,
+      badge: chefCount,
     },
     {
       id: 3,

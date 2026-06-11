@@ -1,17 +1,17 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { getOrdersAvailable } from '@/app/features/order/OrderAvailable'
 import OrderAvailableUI from '@/app/features/order/OrderAvailableUI'
-import { authFetch } from '@/utils/authFetch'
-import client from '@/api/client'
+import useOrderAction from '@/hooks/useOrderAction'
+import useOrderRealTime from '@/hooks/useOrderRealTime'
 
 export default function ChefPage() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [expandedOrders, setExpandedOrders] = useState(new Set())
-  const [realtimeStatus, setRealtimeStatus] = useState('CONNECTING')
+//  const [realtimeStatus, setRealtimeStatus] = useState('CONNECTING')
   const [lastUpdated, setLastUpdated] = useState(null)
   const [errorText, setErrorText] = useState('')
 
@@ -44,7 +44,6 @@ export default function ChefPage() {
       const data = await getOrdersAvailable()
 
       setOrders(data.filter(order => ['accepted'].includes(order.status)))
-      //setOrders(data || [])
       setLastUpdated(new Date())
     } catch (err) {
       console.error('Error fetching orders:', err)
@@ -55,56 +54,27 @@ export default function ChefPage() {
     }
   }, [])
 
-  useEffect(() => {
-    let reloadTimer = null
+  const {
+    handleApprove,
+    handleReject,
+    handleReadyToServe,
+    handleDone,
+    loading: actionLoading,
+  } = useOrderAction(
+    fetchOrders,
+    setOrders,
+    setExpandedOrders,
+    setErrorText
+  )
 
-    const scheduleReload = () => {
-      clearTimeout(reloadTimer)
-
-      reloadTimer = setTimeout(() => {
-        fetchOrders(false)
-      }, 500)
-    }
-
-    fetchOrders(true)
-
-    const channel = client
-      .channel('staff-orders-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
-        () => {
-          scheduleReload()
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'order_items' },
-        () => {
-          scheduleReload()
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'bills' },
-        () => {
-          scheduleReload()
-        }
-      )
-      .subscribe((status, err) => {
-        setRealtimeStatus(status)
-
-        if (err) {
-          console.error('Realtime error:', err)
-          setErrorText('Realtime connection error.')
-        }
-      })
-
-    return () => {
-      clearTimeout(reloadTimer)
-      client.removeChannel(channel)
-    }
-  }, [fetchOrders])
+  const {
+    realtimeStatus,
+    isRealtimeConnected,
+  } = useOrderRealTime(
+    fetchOrders,
+    setErrorText,
+    'staff-orders-realtime'
+  )
 
   const toggleOrder = (orderId) => {
     setExpandedOrders(prev => {
@@ -113,126 +83,6 @@ export default function ChefPage() {
       return next
     })
   }
-
-  const handleApprove = async (orderId) => {
-    try {
-      const res = await authFetch(`/api/orders?id=${orderId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          status: 'ready_to_serve',
-        }),
-      })
-
-      const data = await res.json().catch(() => ({
-        message: 'Invalid server response',
-      }))
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Approve failed')
-      }
-
-      await fetchOrders(false)
-
-      setExpandedOrders(prev => {
-        const next = new Set(prev)
-        next.delete(orderId)
-        return next
-      })
-    } catch (err) {
-      console.error(err)
-      setErrorText(err.message || 'Approve failed')
-    }
-  }
-
-  const handleReject = async (orderId) => {
-    try {
-      const res = await authFetch(`/api/orders?id=${orderId}`, {
-        method: 'DELETE',
-      })
-
-      const data = await res.json().catch(() => ({
-        message: 'Invalid server response',
-      }))
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Reject failed')
-      }
-
-      await fetchOrders(false)
-
-      setExpandedOrders(prev => {
-        const next = new Set(prev)
-        next.delete(orderId)
-        return next
-      })
-    } catch (err) {
-      console.error(err)
-      setErrorText(err.message || 'Reject failed')
-    }
-  }
-
-  const handleReadyToServe = async (orderId) => {
-    try {
-        const res = await authFetch(`/api/orders?id=${orderId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-            status: 'ready_to_serve',
-        }),
-        })
-
-        const data = await res.json().catch(() => ({
-        message: 'Invalid server response',
-        }))
-
-        if (!res.ok) {
-        throw new Error(data.message || 'Ready to serve failed')
-        }
-
-        // Chef done xong thì remove khỏi Chef page
-        setOrders(prev => prev.filter(order => String(order.id) !== String(orderId)))
-
-        setExpandedOrders(prev => {
-        const next = new Set(prev)
-        next.delete(orderId)
-        return next
-        })
-    } catch (err) {
-        console.error(err)
-        setErrorText(err.message || 'Ready to serve failed')
-    }
-    }
-
-  const handleDone = async (orderId) => {
-    try {
-      const res = await authFetch(`/api/orders?id=${orderId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          status: 'served',
-        }),
-      })
-
-      const data = await res.json().catch(() => ({
-        message: 'Invalid server response',
-      }))
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Complete failed')
-      }
-
-      await fetchOrders(false)
-
-      setExpandedOrders(prev => {
-        const next = new Set(prev)
-        next.delete(orderId)
-        return next
-      })
-    } catch (err) {
-      console.error(err)
-      setErrorText(err.message || 'Complete failed')
-    }
-  }
-
-  const isRealtimeConnected = realtimeStatus === 'SUBSCRIBED'
 
   if (loading) {
     return (
@@ -305,7 +155,9 @@ export default function ChefPage() {
                 </h1>
 
                 <p className="mt-2 max-w-2xl text-sm text-slate-200">
-                    New orders that are accepted will appear here. You can track the status of each order and mark them as done when they are ready to serve.
+                  New orders that are accepted will appear here. You can track
+                  the status of each order and mark them as done when they are
+                  ready to serve.
                 </p>
               </div>
 
@@ -420,6 +272,7 @@ export default function ChefPage() {
               onReject={handleReject}
               onReadyToServe={handleReadyToServe}
               onDone={handleDone}
+              actionLoading={actionLoading}
             />
           )}
         </section>

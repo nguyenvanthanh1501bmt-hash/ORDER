@@ -8,7 +8,6 @@ import {
   Hash,
   PackageCheck,
   Table2,
-  Trash2,
   XCircle,
 } from 'lucide-react'
 import SupportShowOrderItems from '@/app/features/order/SupportOrderItems'
@@ -29,6 +28,15 @@ function StatusBadge({ status }) {
       <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700">
         <CheckCircle2 size={13} />
         Accepted
+      </span>
+    )
+  }
+
+  if (status === 'ready_to_serve') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-extrabold text-blue-700">
+        <PackageCheck size={13} />
+        Ready
       </span>
     )
   }
@@ -63,6 +71,7 @@ export default function OrderAvailableUI({
   onReject,
   onReadyToServe,
   onDone,
+  actionLoading,
 }) {
   // Show empty state when there are no active orders.
   if (orders.length === 0) {
@@ -90,6 +99,8 @@ export default function OrderAvailableUI({
         const isPending = order.status === 'pending_staff_approval'
         const isAccepted = order.status === 'accepted'
         const isReadyToServe = order.status === 'ready_to_serve'
+        const isActionLoading = actionLoading === order.id
+
         const tableName = getTableName(order)
         const itemCount = getItemCount(order)
 
@@ -109,7 +120,8 @@ export default function OrderAvailableUI({
             <button
               type="button"
               onClick={() => toggleOrder(order.id)}
-              className="flex w-full items-center justify-between gap-4 p-4 text-left transition hover:bg-slate-50 sm:p-5"
+              disabled={isActionLoading}
+              className="flex w-full items-center justify-between gap-4 p-4 text-left transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:p-5"
             >
               <div className="flex min-w-0 flex-1 items-start gap-4">
                 <div
@@ -118,7 +130,9 @@ export default function OrderAvailableUI({
                     ${
                       isPending
                         ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-100'
-                        : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
+                        : isReadyToServe
+                          ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100'
+                          : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
                     }
                   `}
                 >
@@ -186,20 +200,22 @@ export default function OrderAvailableUI({
                     <>
                       <button
                         type="button"
+                        disabled={isActionLoading}
                         onClick={() => onReject(order.id)}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-extrabold text-red-600 ring-1 ring-red-100 transition hover:bg-red-100 sm:w-auto"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-extrabold text-red-600 ring-1 ring-red-100 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                       >
                         <XCircle size={17} />
-                        Reject
+                        {isActionLoading ? 'Processing...' : 'Reject'}
                       </button>
 
                       <button
                         type="button"
+                        disabled={isActionLoading}
                         onClick={() => onApprove(order.id)}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700 sm:w-auto"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                       >
                         <CheckCircle2 size={17} />
-                        Approve
+                        {isActionLoading ? 'Processing...' : 'Approve'}
                       </button>
                     </>
                   )}
@@ -207,22 +223,24 @@ export default function OrderAvailableUI({
                   {isAccepted && (
                     <button
                       type="button"
+                      disabled={isActionLoading}
                       onClick={() => onReadyToServe(order.id)}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-slate-800 sm:w-auto"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                     >
                       <PackageCheck size={17} />
-                      Mark as ready to serve
+                      {isActionLoading ? 'Processing...' : 'Mark as ready to serve'}
                     </button>
                   )}
 
                   {isReadyToServe && (
                     <button
                       type="button"
+                      disabled={isActionLoading}
                       onClick={() => onDone(order.id)}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700 sm:w-auto"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                     >
                       <CheckCircle2 size={17} />
-                      Mark as served
+                      {isActionLoading ? 'Processing...' : 'Mark as served'}
                     </button>
                   )}
                 </div>
