@@ -172,7 +172,7 @@ export async function getAllPendingOrders() {
       )
     `
     )
-    .in("status", ["pending_staff_approval", "accepted"])
+    .in("status", ["pending_staff_approval", "accepted", "ready_to_serve"])
     .order("created_at", { ascending: true });
 
   if (error) throw error;

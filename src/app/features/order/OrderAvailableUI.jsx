@@ -61,6 +61,7 @@ export default function OrderAvailableUI({
   toggleOrder,
   onApprove,
   onReject,
+  onReadyToServe,
   onDone,
 }) {
   // Show empty state when there are no active orders.
@@ -88,6 +89,7 @@ export default function OrderAvailableUI({
         const isOpen = expandedOrders.has(order.id)
         const isPending = order.status === 'pending_staff_approval'
         const isAccepted = order.status === 'accepted'
+        const isReadyToServe = order.status === 'ready_to_serve'
         const tableName = getTableName(order)
         const itemCount = getItemCount(order)
 
@@ -205,10 +207,21 @@ export default function OrderAvailableUI({
                   {isAccepted && (
                     <button
                       type="button"
-                      onClick={() => onDone(order.id)}
+                      onClick={() => onReadyToServe(order.id)}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-slate-800 sm:w-auto"
                     >
                       <PackageCheck size={17} />
+                      Mark as ready to serve
+                    </button>
+                  )}
+
+                  {isReadyToServe && (
+                    <button
+                      type="button"
+                      onClick={() => onDone(order.id)}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700 sm:w-auto"
+                    >
+                      <CheckCircle2 size={17} />
                       Mark as served
                     </button>
                   )}

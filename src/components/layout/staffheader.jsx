@@ -10,6 +10,7 @@ import {
   Coffee,
   Bell,
   X,
+  Armchair
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -142,11 +143,18 @@ export default function StaffHeader() {
     },
     {
       id: 2,
-      name: "Tables",
+      name: "Chef-cooking",
       icon: UtensilsCrossed,
-      path: "/pages/staff/Tablecheck",
+      path: "/pages/staff/Chef",
       badge: 0,
     },
+    {
+      id: 3,
+      name: "Tables",
+      icon: Armchair,
+      path: "/pages/staff/Tablecheck",
+      badge: 0,
+    }
   ]
 
   return (

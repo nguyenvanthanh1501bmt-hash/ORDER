@@ -6,7 +6,7 @@ import OrderAvailableUI from '@/app/features/order/OrderAvailableUI'
 import { authFetch } from '@/utils/authFetch'
 import client from '@/api/client'
 
-export default function TableCheck() {
+export default function ChefPage() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -42,9 +42,8 @@ export default function TableCheck() {
       }
 
       const data = await getOrdersAvailable()
-      
-      setOrders(data.filter(order => ['pending_staff_approval', 'ready_to_serve'].includes(order.status)))
 
+      setOrders(data.filter(order => ['accepted'].includes(order.status)))
       //setOrders(data || [])
       setLastUpdated(new Date())
     } catch (err) {
@@ -120,7 +119,7 @@ export default function TableCheck() {
       const res = await authFetch(`/api/orders?id=${orderId}`, {
         method: 'PATCH',
         body: JSON.stringify({
-          status: 'accepted',
+          status: 'ready_to_serve',
         }),
       })
 
@@ -132,8 +131,7 @@ export default function TableCheck() {
         throw new Error(data.message || 'Approve failed')
       }
 
-      //move accepted order to chef page
-      setOrders(prev => prev.filter(order => order.id !== orderId))
+      await fetchOrders(false)
 
       setExpandedOrders(prev => {
         const next = new Set(prev)
@@ -172,6 +170,37 @@ export default function TableCheck() {
       setErrorText(err.message || 'Reject failed')
     }
   }
+
+  const handleReadyToServe = async (orderId) => {
+    try {
+        const res = await authFetch(`/api/orders?id=${orderId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+            status: 'ready_to_serve',
+        }),
+        })
+
+        const data = await res.json().catch(() => ({
+        message: 'Invalid server response',
+        }))
+
+        if (!res.ok) {
+        throw new Error(data.message || 'Ready to serve failed')
+        }
+
+        // Chef done xong thì remove khỏi Chef page
+        setOrders(prev => prev.filter(order => String(order.id) !== String(orderId)))
+
+        setExpandedOrders(prev => {
+        const next = new Set(prev)
+        next.delete(orderId)
+        return next
+        })
+    } catch (err) {
+        console.error(err)
+        setErrorText(err.message || 'Ready to serve failed')
+    }
+    }
 
   const handleDone = async (orderId) => {
     try {
@@ -272,11 +301,11 @@ export default function TableCheck() {
                 </div>
 
                 <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                  Incoming Orders
+                  Waiting for chef to prepare orders
                 </h1>
 
                 <p className="mt-2 max-w-2xl text-sm text-slate-200">
-                  Manage new customer orders in realtime. Approve, reject, or mark orders as served.
+                    New orders that are accepted will appear here. You can track the status of each order and mark them as done when they are ready to serve.
                 </p>
               </div>
 
@@ -389,6 +418,7 @@ export default function TableCheck() {
               toggleOrder={toggleOrder}
               onApprove={handleApprove}
               onReject={handleReject}
+              onReadyToServe={handleReadyToServe}
               onDone={handleDone}
             />
           )}
