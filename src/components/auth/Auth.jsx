@@ -13,19 +13,19 @@ const Auth = () => {
           >
             Login
           </TabsTrigger>
-          <TabsTrigger
+          {/* <TabsTrigger
             value="signup"
             className="px-4 py-2 text-gray-700 data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:text-blue-500"
           >
             SignUp
-          </TabsTrigger>
+          </TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="login">
           <Login />
         </TabsContent>
         <TabsContent value="signup">
-          <Signup />
+          {/* <Signup /> */}
         </TabsContent>
       </Tabs>
     </div>
